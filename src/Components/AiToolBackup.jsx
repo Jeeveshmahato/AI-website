@@ -11,12 +11,12 @@ const categories = [
 ];
 const prices = ["All", "Free", "Paid"];
 
-const AITools = () => {
+const AIToolsBackup = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedPrice, setSelectedPrice] = useState("All");
   const [expandedCard, setExpandedCard] = useState(null);
-  const aiTools = [
+  const aiToolsBackup = [
     {
       name: "ChatGPT",
       image:
@@ -47,7 +47,8 @@ const AITools = () => {
     },
     {
       name: "Midjourney",
-      image: "https://avatars.githubusercontent.com/u/61396273?s=200&v=4",
+      image:
+        "https://avatars.githubusercontent.com/u/61396273?s=200&v=4",
       link: "https://www.midjourney.com",
       category: "Image Generation",
       price: "Paid",
@@ -55,8 +56,7 @@ const AITools = () => {
     },
     {
       name: "OpenAI Codex",
-      image:
-        "https://miro.medium.com/v2/resize:fit:1100/format:webp/1*FiIDOSUteSdwzwk5CXmU2w.png",
+      image: "https://miro.medium.com/v2/resize:fit:1100/format:webp/1*FiIDOSUteSdwzwk5CXmU2w.png",
       link: "https://openai.com/research/codex",
       category: "Code Assistance",
       price: "Free",
@@ -74,8 +74,7 @@ const AITools = () => {
     },
     {
       name: "DeepL Translator",
-      image:
-        "https://images-eds-ssl.xboxlive.com/image?url=4rt9.lXDC4H_93laV1_eHHFT949fUipzkiFOBH3fAiZZUCdYojwUyX2aTonS1aIwMrx6NUIsHfUHSLzjGJFxxnCzTIURlExTvn6vGrmhWYr6qq9Wyqf4yHAX5J05LTdObixKM1Rzi2UxtiHC.jApv6q6tMwTPL1Kz3Nur9RJDuw-&format=source",
+      image: "https://images-eds-ssl.xboxlive.com/image?url=4rt9.lXDC4H_93laV1_eHHFT949fUipzkiFOBH3fAiZZUCdYojwUyX2aTonS1aIwMrx6NUIsHfUHSLzjGJFxxnCzTIURlExTvn6vGrmhWYr6qq9Wyqf4yHAX5J05LTdObixKM1Rzi2UxtiHC.jApv6q6tMwTPL1Kz3Nur9RJDuw-&format=source",
       link: "https://www.deepl.com",
       category: "Translation",
       price: "Free",
@@ -94,19 +93,19 @@ const AITools = () => {
     },
   ];
 
-const filteredTools = aiTools.filter((tool) => {
-  const matchesSearch =
-    tool.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    tool.category.toLowerCase().includes(searchTerm.toLowerCase());
-    
-  const matchesCategory = selectedCategory === "All" || tool.category === selectedCategory;
-  const matchesPrice = selectedPrice === "All" || tool.price === selectedPrice;
-
-  return matchesSearch && matchesCategory && matchesPrice;
-});
+  const filteredTools = aiToolsBackup.filter((tool) => {
+    const matchesSearch = tool.name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesCategory =
+      selectedCategory === "All" || tool.category === selectedCategory;
+    const matchesPrice =
+      selectedPrice === "All" || tool.price === selectedPrice;
+    return matchesSearch && matchesCategory && matchesPrice;
+  });
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-gray-800 via-gray-900 to-black text-white p-10">
+  <div className="min-h-screen bg-gradient-to-r from-gray-800 via-gray-900 to-black text-white p-10">
       <motion.h1
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -136,9 +135,7 @@ const filteredTools = aiTools.filter((tool) => {
             key={category}
             onClick={() => setSelectedCategory(category)}
             className={`px-4 py-2 rounded-lg text-white font-semibold ${
-              selectedCategory === category
-                ? "bg-blue-500 shadow-lg"
-                : "bg-gray-700 hover:bg-gray-600"
+              selectedCategory === category ? "bg-blue-500 shadow-lg" : "bg-gray-700 hover:bg-gray-600"
             } transition-all`}
           >
             {category}
@@ -151,9 +148,7 @@ const filteredTools = aiTools.filter((tool) => {
             key={price}
             onClick={() => setSelectedPrice(price)}
             className={`px-4 py-2 rounded-lg text-white font-semibold ${
-              selectedPrice === price
-                ? "bg-green-500 shadow-lg"
-                : "bg-gray-700 hover:bg-gray-600"
+              selectedPrice === price ? "bg-green-500 shadow-lg" : "bg-gray-700 hover:bg-gray-600"
             } transition-all`}
           >
             {price}
@@ -170,29 +165,16 @@ const filteredTools = aiTools.filter((tool) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: index * 0.2 }}
             className="border bg-gray-800 p-6 rounded-lg shadow-xl cursor-pointer hover:scale-105 transition-transform"
-            onClick={() =>
-              setExpandedCard(expandedCard === index ? null : index)
-            }
+            onClick={() => setExpandedCard(expandedCard === index ? null : index)}
           >
-            <img
-              src={tool.image}
-              alt={tool.name}
-              className="mx-auto mb-4 w-32 h-32 rounded-lg shadow-md"
-            />
+            <img src={tool.image} alt={tool.name} className="mx-auto mb-4 w-32 h-32 rounded-lg shadow-md" />
             <h2 className="text-lg font-semibold text-center">{tool.name}</h2>
-            <p
-              className={`text-sm font-semibold text-center mt-2 ${
-                tool.price === "Free" ? "text-green-400" : "text-red-400"
-              }`}
-            >
+            <p className={`text-sm font-semibold text-center mt-2 ${
+              tool.price === "Free" ? "text-green-400" : "text-red-400"
+            }`}>
               {tool.price}
             </p>
-            <a
-              href={tool.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-500 text-center block mt-2"
-            >
+            <a href={tool.link} target="_blank" rel="noopener noreferrer" className="text-blue-500 text-center block mt-2">
               Visit Site
             </a>
 
@@ -214,4 +196,4 @@ const filteredTools = aiTools.filter((tool) => {
   );
 };
 
-export default AITools;
+export default AIToolsBackup;
