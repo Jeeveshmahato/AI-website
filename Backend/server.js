@@ -12,10 +12,10 @@ app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 // app.use(cors({ origin: "http://localhost:5173" })); // Allow frontend access
 
 const allowedOrigins = [
-  "https://ai-website-eight-ivory.vercel.app", // ✅ Your frontend domain
-  "https://www.ai-website-eight-ivory.vercel.app", // ✅ Just in case of www redirect
+  process.env.CLIENT_URL, // ✅ From your .env file
+  "https://ai-website-eight-ivory.vercel.app", // ✅ Hardcoded backup
+  "https://www.ai-website-eight-ivory.vercel.app" // ✅ To handle www redirects
 ];
-
 
 app.use(
   cors({
@@ -24,6 +24,7 @@ app.use(
     credentials: true,
   })
 );
+
 
 
 // ✅ Ensure MONGO_URI is loaded
