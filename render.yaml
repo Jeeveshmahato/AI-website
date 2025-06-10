@@ -3,14 +3,12 @@ services:
     name: ai-website-backend
     env: node
     plan: free
-    region: oregon # Choose the best region for your users
+    region: oregon
     buildCommand: npm install
     startCommand: npm start
     envVars:
       - key: MONGO_URI
-        fromDatabase:
-          name: namastenode
-          property: connectionString
+        value: "mongodb+srv://jeeveshatwork:RTntEvE5Gt4hHW2M@namastenode.kcy1y.mongodb.net/?retryWrites=true&w=majority&appName=NamasteNode"
       - key: PORT
         value: 5000
     autoDeploy: true
