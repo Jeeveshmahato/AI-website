@@ -1,25 +1,28 @@
-# Logs
-logs
+# 🔒 Environment variables (never commit secrets)
+Backend/.env
+Frontend/.env
+Backend/.env
+# 📦 Dependency folders
+Backend/node_modules/
+Frontend/node_modules/
+
+# 🛠️ Build artifacts
+Frontend/dist/
+Frontend/build/
+
+# 📂 Lock files (optional—include if you're using lock consistency elsewhere)
+Backend/package-lock.json
+Frontend/package-lock.json
+
+# 🧪 Local testing logs
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# 🛠️ Tooling configs (optional)
+Backend/vercel.json
+Frontend/vercel.json
+Frontend/render.yaml
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# 💻 System/IDE files
+.vscode/
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-.env
+Thumbs.db
