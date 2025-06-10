@@ -29,7 +29,7 @@ const Navbar = () => {
           }`}
         >
           <ul className="flex flex-col md:flex-row md:space-x-4 p-4 md:p-0">
-            {["Home", "About", "AI Tools", "Contact"].map((item) => (
+            {["Home", "About", "AI Tools", "Contact","Submit"].map((item) => (
               <motion.li
                 key={item}
                 whileHover={{ scale: 1.1 }}
