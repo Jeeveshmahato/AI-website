@@ -51,7 +51,7 @@ const Submit = ({ aiTools, setAiTools }) => {
       return alert("Please fill all required fields!");
 
     try {
-      const response = await fetch(Base_Url + "/api/aitools", {
+      const response = await fetch(import.meta.env.VITE_BASEURL+"/api/aitools", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newTool),

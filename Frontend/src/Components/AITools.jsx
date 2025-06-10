@@ -23,7 +23,7 @@ const AITools = () => {
   useEffect(() => {
     const fetchTools = async () => {
       try {
-        const response = await fetch(Base_Url + "/api/aitools");
+        const response = await fetch(import.meta.env.VITE_BASEURL+ "/api/aitools");
         const data = await response.json();
         setAiTools(data);
       } catch (error) {
