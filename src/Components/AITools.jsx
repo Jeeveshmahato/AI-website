@@ -1,7 +1,15 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { Base_Url } from "./const";
 
-const categories = ["All", "Chatbot", "Image Generation", "Code Assistance", "Translation", "Writing Assistant"];
+const categories = [
+  "All",
+  "Chatbot",
+  "Image Generation",
+  "Code Assistance",
+  "Translation",
+  "Writing Assistant",
+];
 const prices = ["All", "Free", "Paid"];
 
 const AITools = () => {
@@ -13,25 +21,27 @@ const AITools = () => {
 
   // Fetch AI tools from MongoDB on component mount
   useEffect(() => {
-  const fetchTools = async () => {
-    try {
-      const response = await fetch("http://localhost:5000/api/aitools");
-      const data = await response.json();
-      setAiTools(data);
-    } catch (error) {
-      console.error("Error fetching tools:", error);
-    }
-  };
-  fetchTools();
-}, []);
+    const fetchTools = async () => {
+      try {
+        const response = await fetch(Base_Url + "/api/aitools");
+        const data = await response.json();
+        setAiTools(data);
+      } catch (error) {
+        console.error("Error fetching tools:", error);
+      }
+    };
+    fetchTools();
+  }, []);
 
   const filteredTools = aiTools.filter((tool) => {
     const matchesSearch =
       tool.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       tool.category.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesCategory = selectedCategory === "All" || tool.category === selectedCategory;
-    const matchesPrice = selectedPrice === "All" || tool.price === selectedPrice;
+    const matchesCategory =
+      selectedCategory === "All" || tool.category === selectedCategory;
+    const matchesPrice =
+      selectedPrice === "All" || tool.price === selectedPrice;
 
     return matchesSearch && matchesCategory && matchesPrice;
   });
@@ -67,7 +77,9 @@ const AITools = () => {
             key={category}
             onClick={() => setSelectedCategory(category)}
             className={`px-4 py-2 rounded-lg text-white font-semibold shadow-md ${
-              selectedCategory === category ? "bg-blue-500" : "bg-gray-700 hover:bg-gray-600"
+              selectedCategory === category
+                ? "bg-blue-500"
+                : "bg-gray-700 hover:bg-gray-600"
             } transition-all`}
           >
             {category}
@@ -80,7 +92,9 @@ const AITools = () => {
             key={price}
             onClick={() => setSelectedPrice(price)}
             className={`px-4 py-2 rounded-lg text-white font-semibold shadow-md ${
-              selectedPrice === price ? "bg-green-500" : "bg-gray-700 hover:bg-gray-600"
+              selectedPrice === price
+                ? "bg-green-500"
+                : "bg-gray-700 hover:bg-gray-600"
             } transition-all`}
           >
             {price}
@@ -97,14 +111,29 @@ const AITools = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: index * 0.2 }}
             className="border bg-gray-800 p-6 rounded-lg shadow-xl cursor-pointer transform hover:scale-105 transition-all hover:shadow-lg"
-            onClick={() => setExpandedCard(expandedCard === index ? null : index)}
+            onClick={() =>
+              setExpandedCard(expandedCard === index ? null : index)
+            }
           >
-            <img src={tool.image} alt={tool.name} className="mx-auto mb-4 w-32 h-32 rounded-lg shadow-md" />
+            <img
+              src={tool.image}
+              alt={tool.name}
+              className="mx-auto mb-4 w-32 h-32 rounded-lg shadow-md"
+            />
             <h2 className="text-lg font-semibold text-center">{tool.name}</h2>
-            <p className={`text-sm font-semibold text-center mt-2 ${tool.price === "Free" ? "text-green-400" : "text-red-400"}`}>
+            <p
+              className={`text-sm font-semibold text-center mt-2 ${
+                tool.price === "Free" ? "text-green-400" : "text-red-400"
+              }`}
+            >
               {tool.price}
             </p>
-            <a href={tool.link} target="_blank" rel="noopener noreferrer" className="text-blue-500 text-center block mt-2">
+            <a
+              href={tool.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500 text-center block mt-2"
+            >
               Visit Site
             </a>
 

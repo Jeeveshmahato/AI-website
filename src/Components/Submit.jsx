@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Base_Url } from "./const";
 
 const categories = [
   "Chatbot",
@@ -44,29 +45,30 @@ const Submit = ({ aiTools, setAiTools }) => {
     setImagePreview(e.target.value); // Preview image
   };
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!newTool.name || !newTool.link || !newTool.image) return alert("Please fill all required fields!");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!newTool.name || !newTool.link || !newTool.image)
+      return alert("Please fill all required fields!");
 
-  try {
-    const response = await fetch("http://localhost:5000/api/aitools", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newTool),
-    });
+    try {
+      const response = await fetch(Base_Url + "/api/aitools", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newTool),
+      });
 
-    if (!response.ok) {
-      throw new Error(`HTTP Error! Status: ${response.status}`);
+      if (!response.ok) {
+        throw new Error(`HTTP Error! Status: ${response.status}`);
+      }
+
+      const addedTool = await response.json();
+      setAiTools([...aiTools, addedTool]); // Update UI
+      navigate("/aitools");
+    } catch (error) {
+      console.error("Submit Error:", error);
+      alert(`Submission Failed: ${error.message}`);
     }
-
-    const addedTool = await response.json();
-    setAiTools([...aiTools, addedTool]); // Update UI
-    navigate("/aitools");
-  } catch (error) {
-    console.error("Submit Error:", error);
-    alert(`Submission Failed: ${error.message}`);
-  }
-};
+  };
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center">
       <h1 className="text-4xl font-extrabold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
