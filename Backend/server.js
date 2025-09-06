@@ -73,9 +73,10 @@ app.delete("/api/aitools/:id", async (req, res) => {
 app.use(express.static(path.join(__dirname, "client", "build")));
 
 // Catch-all route for React Router
-app.get("*", (req, res) => {
+app.get("/*", (req, res) => {
   res.sendFile(path.join(__dirname, "client", "build", "index.html"));
 });
+
 
 // Start server
 const PORT = process.env.PORT || 5000;
