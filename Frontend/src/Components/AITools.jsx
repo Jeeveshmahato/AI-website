@@ -118,7 +118,7 @@ const AITools = () => {
             <img
               src={tool.image}
               alt={tool.name}
-              className="mx-auto mb-4 w-32 h-32 rounded-lg shadow-md"
+              className="mx-auto mb-4 max-w-32 max-h-32 p-4 bg-white rounded-lg shadow-md"
             />
             <h2 className="text-lg font-semibold text-center">{tool.name}</h2>
             <p
