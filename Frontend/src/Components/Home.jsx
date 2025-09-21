@@ -13,22 +13,35 @@ const Home = () => {
         <h1 className="text-5xl font-extrabold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
           Discover the Power of AI
         </h1>
-        <p className="mt-4 text-lg text-gray-300">Explore top AI tools and enhance productivity like never before.</p>
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          className="mt-6 px-6 py-3 bg-blue-500 text-white font-semibold rounded-full shadow-lg hover:bg-blue-600 transition-all"
-        >
-          Get Started
-        </motion.button>
+        <p className="mt-4 text-lg text-gray-300">
+          Explore top AI tools and enhance productivity like never before.
+        </p>
+        <Link to="/aitools">
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            className="mt-6 px-6 py-3 bg-blue-500 text-white font-semibold rounded-full shadow-lg hover:bg-blue-600 transition-all"
+          >
+            Get Started
+          </motion.button>
+        </Link>
       </motion.div>
 
       {/* Features Section */}
       <div className="mt-16 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
         {[
-          { title: "Smart Chatbots", desc: "AI-powered conversations that feel natural." },
-          { title: "Creative Generators", desc: "Generate images, text, and code seamlessly." },
-          { title: "Automation Tools", desc: "Streamline tasks and optimize workflows." },
+          {
+            title: "Smart Chatbots",
+            desc: "AI-powered conversations that feel natural.",
+          },
+          {
+            title: "Creative Generators",
+            desc: "Generate images, text, and code seamlessly.",
+          },
+          {
+            title: "Automation Tools",
+            desc: "Streamline tasks and optimize workflows.",
+          },
         ].map((feature, index) => (
           <motion.div
             key={index}
