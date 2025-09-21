@@ -26,3 +26,5 @@ Frontend/render.yaml
 .vscode/
 .DS_Store
 Thumbs.db
+Backend/.env
+Backend/.env
