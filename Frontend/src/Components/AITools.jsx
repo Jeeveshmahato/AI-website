@@ -38,11 +38,35 @@ const AITools = () => {
     return () => clearTimeout(debounceRef.current);
   }, []);
 
-  // Fetch AI tools from API with retry for mobile networks
+  // Fetch AI tools from API with retry for mobile networks + localStorage cache
   useEffect(() => {
     const controller = new AbortController();
+    const CACHE_KEY = "aitools_cache";
+    const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
-    const fetchTools = async (retries = 2) => {
+    const getCachedTools = () => {
+      try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (!cached) return null;
+        const { data, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < CACHE_TTL && Array.isArray(data)) {
+          return data;
+        }
+      } catch {
+        // ignore corrupted cache
+      }
+      return null;
+    };
+
+    const setCachedTools = (data) => {
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ data, timestamp: Date.now() }));
+      } catch {
+        // ignore storage full
+      }
+    };
+
+    const fetchTools = async (retries = 3) => {
       try {
         setLoading(true);
         setError(null);
@@ -51,6 +75,7 @@ const AITools = () => {
         }
         const response = await fetch(`${Base_Url}/api/aitools`, {
           signal: controller.signal,
+          headers: { Accept: "application/json" },
         });
         if (!response.ok) {
           throw new Error(`Failed to load tools (${response.status})`);
@@ -60,11 +85,18 @@ const AITools = () => {
           throw new Error("Invalid response format");
         }
         setAiTools(data);
+        setCachedTools(data);
       } catch (err) {
         if (err.name === "AbortError") return;
         if (retries > 0 && (err.message === "Failed to fetch" || err.name === "TypeError")) {
-          await new Promise((r) => setTimeout(r, 1500));
+          await new Promise((r) => setTimeout(r, 2000));
           return fetchTools(retries - 1);
+        }
+        // Fall back to cached data on network failure
+        const cached = getCachedTools();
+        if (cached) {
+          setAiTools(cached);
+          return;
         }
         console.error("Error fetching tools:", err);
         setError(err.message);
@@ -72,6 +104,13 @@ const AITools = () => {
         setLoading(false);
       }
     };
+
+    // Show cached data immediately while fetching fresh data
+    const cached = getCachedTools();
+    if (cached) {
+      setAiTools(cached);
+      setLoading(false);
+    }
 
     fetchTools();
     return () => controller.abort();
@@ -154,11 +193,14 @@ const AITools = () => {
 
       {/* Error State */}
       {error && !loading && (
-        <div className="text-center mt-16">
-          <p className="text-red-400 text-lg mb-4">Failed to load tools: {error}</p>
+        <div className="text-center mt-16 px-4">
+          <p className="text-red-400 text-lg mb-2">Failed to load tools</p>
+          <p className="text-gray-400 text-sm mb-4">
+            Please check your internet connection and try again.
+          </p>
           <button
             onClick={() => window.location.reload()}
-            className="px-6 py-3 bg-blue-500 rounded-lg font-semibold hover:bg-blue-600 transition-colors"
+            className="px-6 py-3 bg-blue-500 rounded-lg font-semibold hover:bg-blue-600 transition-colors min-h-[44px]"
           >
             Try Again
           </button>

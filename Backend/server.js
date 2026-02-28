@@ -41,16 +41,17 @@ app.use(limiter);
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
-// CORS setup - trim trailing slash to prevent mismatch
-const clientUrl = process.env.CLIENT_URL.replace(/\/+$/, "");
+// CORS setup - support multiple origins from CLIENT_URL (comma-separated)
+const allowedOrigins = process.env.CLIENT_URL
+  .split(",")
+  .map((url) => url.trim().replace(/\/+$/, ""));
 app.use(
   cors({
     origin: function (origin, callback) {
       // Allow requests with no origin (mobile apps, server-to-server)
       if (!origin) return callback(null, true);
-      // Allow if origin matches the configured client URL (with or without trailing slash)
       const normalizedOrigin = origin.replace(/\/+$/, "");
-      if (normalizedOrigin === clientUrl) {
+      if (allowedOrigins.includes(normalizedOrigin)) {
         return callback(null, true);
       }
       callback(new Error("Not allowed by CORS"));
