@@ -45,7 +45,16 @@ app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 const clientUrl = process.env.CLIENT_URL.replace(/\/+$/, "");
 app.use(
   cors({
-    origin: clientUrl,
+    origin: function (origin, callback) {
+      // Allow requests with no origin (mobile apps, server-to-server)
+      if (!origin) return callback(null, true);
+      // Allow if origin matches the configured client URL (with or without trailing slash)
+      const normalizedOrigin = origin.replace(/\/+$/, "");
+      if (normalizedOrigin === clientUrl) {
+        return callback(null, true);
+      }
+      callback(new Error("Not allowed by CORS"));
+    },
     methods: ["GET", "POST", "DELETE", "OPTIONS"],
     credentials: true,
   })

@@ -38,14 +38,17 @@ const AITools = () => {
     return () => clearTimeout(debounceRef.current);
   }, []);
 
-  // Fetch AI tools from API
+  // Fetch AI tools from API with retry for mobile networks
   useEffect(() => {
     const controller = new AbortController();
 
-    const fetchTools = async () => {
+    const fetchTools = async (retries = 2) => {
       try {
         setLoading(true);
         setError(null);
+        if (!Base_Url) {
+          throw new Error("API URL not configured");
+        }
         const response = await fetch(`${Base_Url}/api/aitools`, {
           signal: controller.signal,
         });
@@ -58,10 +61,13 @@ const AITools = () => {
         }
         setAiTools(data);
       } catch (err) {
-        if (err.name !== "AbortError") {
-          console.error("Error fetching tools:", err);
-          setError(err.message);
+        if (err.name === "AbortError") return;
+        if (retries > 0 && (err.message === "Failed to fetch" || err.name === "TypeError")) {
+          await new Promise((r) => setTimeout(r, 1500));
+          return fetchTools(retries - 1);
         }
+        console.error("Error fetching tools:", err);
+        setError(err.message);
       } finally {
         setLoading(false);
       }
