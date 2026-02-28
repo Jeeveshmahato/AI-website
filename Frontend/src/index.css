@@ -1,1 +1,34 @@
 @import "tailwindcss";
+
+/* Mobile viewport fix — use dvh for real mobile viewport height */
+html, body, #root {
+  min-height: 100vh;
+  min-height: 100dvh;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Prevent horizontal overflow on mobile */
+body {
+  overflow-x: hidden;
+}
+
+/* Fix iOS input zoom (font-size < 16px triggers zoom) */
+input, select, textarea {
+  font-size: 16px;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Safe area padding for notched devices */
+@supports (padding: env(safe-area-inset-bottom)) {
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}

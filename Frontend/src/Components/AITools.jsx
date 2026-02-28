@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Base_Url } from "./const";
+import { sanitizeUrl, sanitizeImageSrc } from "../utils/sanitize";
 
 const categories = [
   "All",
@@ -14,37 +15,76 @@ const prices = ["All", "Free", "Paid"];
 
 const AITools = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedPrice, setSelectedPrice] = useState("All");
   const [expandedCard, setExpandedCard] = useState(null);
   const [aiTools, setAiTools] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const debounceRef = useRef(null);
 
-  // Fetch AI tools from MongoDB on component mount
-  useEffect(() => {
-    const fetchTools = async () => {
-      try {
-        const response = await fetch(import.meta.env.VITE_BASEURL+ "/api/aitools");
-        const data = await response.json();
-        setAiTools(data);
-      } catch (error) {
-        console.error("Error fetching tools:", error);
-      }
-    };
-    fetchTools();
+  // Debounce search input
+  const handleSearchChange = useCallback((e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSearch(value);
+    }, 300);
   }, []);
 
-  const filteredTools = aiTools.filter((tool) => {
-    const matchesSearch =
-      tool.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      tool.category.toLowerCase().includes(searchTerm.toLowerCase());
+  useEffect(() => {
+    return () => clearTimeout(debounceRef.current);
+  }, []);
 
-    const matchesCategory =
-      selectedCategory === "All" || tool.category === selectedCategory;
-    const matchesPrice =
-      selectedPrice === "All" || tool.price === selectedPrice;
+  // Fetch AI tools from API
+  useEffect(() => {
+    const controller = new AbortController();
 
-    return matchesSearch && matchesCategory && matchesPrice;
-  });
+    const fetchTools = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetch(`${Base_Url}/api/aitools`, {
+          signal: controller.signal,
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to load tools (${response.status})`);
+        }
+        const data = await response.json();
+        if (!Array.isArray(data)) {
+          throw new Error("Invalid response format");
+        }
+        setAiTools(data);
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("Error fetching tools:", err);
+          setError(err.message);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTools();
+    return () => controller.abort();
+  }, []);
+
+  const filteredTools = useMemo(() => {
+    const search = debouncedSearch.toLowerCase();
+    return aiTools.filter((tool) => {
+      const matchesSearch =
+        !search ||
+        (tool.name && tool.name.toLowerCase().includes(search)) ||
+        (tool.category && tool.category.toLowerCase().includes(search));
+      const matchesCategory =
+        selectedCategory === "All" || tool.category === selectedCategory;
+      const matchesPrice =
+        selectedPrice === "All" || tool.price === selectedPrice;
+      return matchesSearch && matchesCategory && matchesPrice;
+    });
+  }, [aiTools, debouncedSearch, selectedCategory, selectedPrice]);
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-gray-800 via-gray-900 to-black text-white p-4 sm:p-10">
@@ -62,95 +102,127 @@ const AITools = () => {
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.6 }}
-        type="text"
+        type="search"
         placeholder="Search AI Tools..."
-        className="border p-2 sm:p-3 w-40 sm:w-64 mt-6 rounded-lg bg-gray-700 text-white text-center mx-auto block focus:outline-none focus:ring-2 focus:ring-blue-500 text-base sm:text-lg"
-        onChange={(e) => setSearchTerm(e.target.value)}
+        value={searchTerm}
+        className="border p-3 w-full max-w-md mt-6 rounded-lg bg-gray-700 text-white text-center mx-auto block focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
+        onChange={handleSearchChange}
       />
 
       {/* Filters */}
-      <div className="mt-6 flex flex-wrap gap-2 sm:gap-3 justify-center">
+      <div className="mt-6 flex flex-wrap gap-2 justify-center">
         {categories.map((category) => (
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
+          <button
             key={category}
             onClick={() => setSelectedCategory(category)}
-            className={`px-2 sm:px-4 py-1 sm:py-2 rounded-lg text-xs sm:text-base text-white font-semibold shadow-md ${
+            className={`px-3 py-2 rounded-lg text-sm sm:text-base text-white font-semibold shadow-md min-h-[44px] ${
               selectedCategory === category
                 ? "bg-blue-500"
-                : "bg-gray-700 hover:bg-gray-600"
-            } transition-all`}
+                : "bg-gray-700 hover:bg-gray-600 active:bg-gray-500"
+            } transition-colors`}
           >
             {category}
-          </motion.button>
+          </button>
         ))}
         {prices.map((price) => (
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
+          <button
             key={price}
             onClick={() => setSelectedPrice(price)}
-            className={`px-2 sm:px-4 py-1 sm:py-2 rounded-lg text-xs sm:text-base text-white font-semibold shadow-md ${
+            className={`px-3 py-2 rounded-lg text-sm sm:text-base text-white font-semibold shadow-md min-h-[44px] ${
               selectedPrice === price
                 ? "bg-green-500"
-                : "bg-gray-700 hover:bg-gray-600"
-            } transition-all`}
+                : "bg-gray-700 hover:bg-gray-600 active:bg-gray-500"
+            } transition-colors`}
           >
             {price}
-          </motion.button>
+          </button>
         ))}
       </div>
+
+      {/* Loading State */}
+      {loading && (
+        <div className="flex justify-center mt-16">
+          <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && !loading && (
+        <div className="text-center mt-16">
+          <p className="text-red-400 text-lg mb-4">Failed to load tools: {error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-6 py-3 bg-blue-500 rounded-lg font-semibold hover:bg-blue-600 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!loading && !error && filteredTools.length === 0 && (
+        <p className="text-center text-gray-400 mt-16 text-lg">
+          No tools found matching your search.
+        </p>
+      )}
 
       {/* AI Tools Listing */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mt-8">
-        {filteredTools.map((tool, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: index * 0.2 }}
-            className="border bg-gray-800 p-3 sm:p-6 rounded-lg shadow-xl cursor-pointer transform hover:scale-105 transition-all hover:shadow-lg"
-            onClick={() =>
-              setExpandedCard(expandedCard === index ? null : index)
-            }
-          >
-            <img
-              src={tool.image}
-              alt={tool.name}
-              className="mx-auto mb-2 sm:mb-4 w-20 h-20 sm:max-w-32 sm:max-h-32 p-2 sm:p-4 bg-white rounded-lg shadow-md"
-            />
-            <h2 className="text-base sm:text-lg font-semibold text-center">{tool.name}</h2>
-            <p
-              className={`text-xs sm:text-sm font-semibold text-center mt-2 ${
-                tool.price === "Free" ? "text-green-400" : "text-red-400"
-              }`}
+      {!loading && !error && filteredTools.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mt-8">
+          {filteredTools.map((tool) => (
+            <motion.div
+              key={tool._id || tool.name}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="border border-gray-700 bg-gray-800 p-4 sm:p-6 rounded-lg shadow-xl cursor-pointer hover:shadow-lg active:scale-[0.98] transition-all"
+              onClick={() =>
+                setExpandedCard(expandedCard === tool._id ? null : tool._id)
+              }
             >
-              {tool.price}
-            </p>
-            <a
-              href={tool.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-500 text-center block mt-2 text-xs sm:text-base"
-            >
-              Visit Site
-            </a>
-
-            {/* Animated Description Reveal */}
-            {expandedCard === index && (
-              <motion.p
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="mt-4 text-gray-300 text-center text-xs sm:text-base"
+              <img
+                src={sanitizeImageSrc(tool.image) || "https://via.placeholder.com/100"}
+                alt={tool.name || "AI Tool"}
+                loading="lazy"
+                className="mx-auto mb-3 w-20 h-20 sm:max-w-32 sm:max-h-32 p-2 sm:p-4 bg-white rounded-lg shadow-md object-contain"
+                onError={(e) => {
+                  e.target.src = "https://via.placeholder.com/100";
+                }}
+              />
+              <h2 className="text-base sm:text-lg font-semibold text-center">
+                {tool.name}
+              </h2>
+              <p
+                className={`text-sm font-semibold text-center mt-2 ${
+                  tool.price === "Free" ? "text-green-400" : "text-red-400"
+                }`}
               >
-                {tool.description}
-              </motion.p>
-            )}
-          </motion.div>
-        ))}
-      </div>
+                {tool.price}
+              </p>
+              <a
+                href={sanitizeUrl(tool.link)}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="text-blue-500 text-center block mt-2 text-sm sm:text-base hover:underline"
+              >
+                Visit Site
+              </a>
+
+              {expandedCard === tool._id && (
+                <motion.p
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  transition={{ duration: 0.3 }}
+                  className="mt-4 text-gray-300 text-center text-sm sm:text-base"
+                >
+                  {tool.description}
+                </motion.p>
+              )}
+            </motion.div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

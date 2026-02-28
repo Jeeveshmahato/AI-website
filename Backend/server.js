@@ -2,87 +2,96 @@ import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
-import path from "path";
-import { fileURLToPath } from "url";
-import AITool from "./models/AITool.js";
+import helmet from "helmet";
+import compression from "compression";
+import rateLimit from "express-rate-limit";
+import aitoolsRouter from "./routes/aitools.js";
+import errorHandler from "./middleware/errorHandler.js";
 
 dotenv.config();
 
+// Validate required env vars
+const requiredEnvVars = ["MONGO_URI", "CLIENT_URL", "API_KEY"];
+for (const envVar of requiredEnvVars) {
+  if (!process.env[envVar]) {
+    console.error(`Missing required environment variable: ${envVar}`);
+    process.exit(1);
+  }
+}
+
 const app = express();
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
-// Setup __dirname for ES Modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Security headers
+app.use(helmet());
 
-// CORS setup
-const allowedOrigins = [process.env.CLIENT_URL];
+// Response compression
+app.use(compression());
+
+// Rate limiting - 100 requests per 15 minutes per IP
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests, please try again later" },
+});
+app.use(limiter);
+
+// Body parsing with reasonable limits
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
+
+// CORS setup - trim trailing slash to prevent mismatch
+const clientUrl = process.env.CLIENT_URL.replace(/\/+$/, "");
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: clientUrl,
     methods: ["GET", "POST", "DELETE", "OPTIONS"],
     credentials: true,
   })
 );
 
-// MongoDB connection
-if (!process.env.MONGO_URI) {
-  console.error("❌ MONGO_URI is missing in .env");
-  process.exit(1);
-}
-
-mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.error("❌ MongoDB error:", err));
-
 // API routes
-app.post("/api/aitools", async (req, res) => {
-  try {
-    const newTool = new AITool(req.body);
-    await newTool.save();
-    res.status(201).json(newTool);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+app.use("/api/aitools", aitoolsRouter);
+
+// Health check endpoint
+app.get("/health", (req, res) => {
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-app.get("/api/aitools", async (req, res) => {
-  try {
-    const tools = await AITool.find();
-    res.status(200).json(tools);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+// 404 handler for unknown routes
+app.use((req, res) => {
+  res.status(404).json({ error: "Route not found" });
 });
 
-app.delete("/api/aitools/:id", async (req, res) => {
-  try {
-    await AITool.findByIdAndDelete(req.params.id);
-    res.status(200).json({ message: "Tool deleted successfully" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+// Centralized error handler (must be last)
+app.use(errorHandler);
 
-// Serve React static files
-app.use(express.static(path.join(__dirname, "client", "build")));
-
-// Catch-all route for React Router
-app.use((req, res, next) => {
-  if (req.method === "GET" && !req.path.startsWith("/api")) {
-    res.sendFile(path.join(__dirname, "client", "build", "index.html"));
-  } else {
-    next();
-  }
-});
+// MongoDB connection
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => {
+    console.error("MongoDB connection error:", err.message);
+    process.exit(1);
+  });
 
 // Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
+const server = app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
+
+// Graceful shutdown
+const shutdown = (signal) => {
+  console.log(`${signal} received. Shutting down gracefully...`);
+  server.close(() => {
+    mongoose.connection.close(false).then(() => {
+      console.log("MongoDB connection closed");
+      process.exit(0);
+    });
+  });
+};
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
