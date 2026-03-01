@@ -148,6 +148,19 @@ const AITools = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-gray-800 via-gray-900 to-black text-white p-4 sm:p-10">
+      {/* Mobile notice - tools not supported on small screens */}
+      <div className="flex sm:hidden flex-col items-center justify-center min-h-[60vh] text-center px-4">
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-16 h-16 text-gray-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+        <h2 className="text-xl font-bold mb-2">Desktop Only</h2>
+        <p className="text-gray-400 text-sm max-w-xs">
+          The AI Tools directory is best experienced on a larger screen. Please visit this page on a desktop or tablet for the full experience.
+        </p>
+      </div>
+
+      {/* Desktop content - hidden on small screens */}
+      <div className="hidden sm:block">
       <motion.h1
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -301,6 +314,7 @@ const AITools = () => {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 };

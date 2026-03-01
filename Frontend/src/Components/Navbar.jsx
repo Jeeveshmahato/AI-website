@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 const NAV_ITEMS = [
   { label: "Home", path: "/home" },
   { label: "About", path: "/about" },
-  { label: "AI Tools", path: "/aitools" },
+  { label: "AI Tools", path: "/aitools", desktopOnly: true },
   { label: "Contact", path: "/contact" },
   { label: "Submit", path: "/submit" },
 ];
@@ -63,7 +63,7 @@ const Navbar = () => {
               className="absolute top-full left-0 w-full bg-gray-900 md:hidden shadow-lg"
             >
               <ul className="flex flex-col p-2">
-                {NAV_ITEMS.map((item) => (
+                {NAV_ITEMS.filter((item) => !item.desktopOnly).map((item) => (
                   <li key={item.path}>
                     <Link
                       to={item.path}
