@@ -33,19 +33,19 @@ const Contact = () => {
           type="text"
           placeholder="Your Name"
           required
-          className="w-full p-3 mb-4 bg-gray-700 rounded-lg text-white min-h-[44px]"
+          className="w-full p-3 mb-4 bg-gray-700 rounded-lg text-white text-base min-h-[44px]"
         />
         <input
           type="email"
           placeholder="Your Email"
           required
-          className="w-full p-3 mb-4 bg-gray-700 rounded-lg text-white min-h-[44px]"
+          className="w-full p-3 mb-4 bg-gray-700 rounded-lg text-white text-base min-h-[44px]"
         />
         <textarea
           placeholder="Your Message"
           required
           rows={4}
-          className="w-full p-3 mb-4 bg-gray-700 rounded-lg text-white resize-y"
+          className="w-full p-3 mb-4 bg-gray-700 rounded-lg text-white text-base resize-y"
         />
         <button
           type="submit"

@@ -166,7 +166,7 @@ const Submit = ({ aiTools, setAiTools }) => {
             value={newTool.name}
             onChange={handleChange}
             maxLength={100}
-            className="w-full p-3 bg-gray-700 rounded-lg text-white"
+            className="w-full p-3 bg-gray-700 rounded-lg text-white text-base"
           />
           {errors.name && <p className="text-red-400 text-sm mt-1">{errors.name}</p>}
         </div>
@@ -177,7 +177,7 @@ const Submit = ({ aiTools, setAiTools }) => {
             name="category"
             value={newTool.category}
             onChange={handleChange}
-            className="w-full p-3 bg-gray-700 rounded-lg text-white"
+            className="w-full p-3 bg-gray-700 rounded-lg text-white text-base"
           >
             {categories.map((category) => (
               <option key={category} value={category}>
@@ -222,7 +222,7 @@ const Submit = ({ aiTools, setAiTools }) => {
             placeholder="Website Link (https://...) *"
             value={newTool.link}
             onChange={handleChange}
-            className="w-full p-3 bg-gray-700 rounded-lg text-white"
+            className="w-full p-3 bg-gray-700 rounded-lg text-white text-base"
           />
           {errors.link && <p className="text-red-400 text-sm mt-1">{errors.link}</p>}
         </div>
@@ -253,7 +253,7 @@ const Submit = ({ aiTools, setAiTools }) => {
             type="url"
             placeholder="https://example.com/image.png"
             onChange={handleImageUrl}
-            className="w-full p-3 bg-gray-700 rounded-lg text-white"
+            className="w-full p-3 bg-gray-700 rounded-lg text-white text-base"
           />
           {errors.image && <p className="text-red-400 text-sm mt-1">{errors.image}</p>}
           {imagePreview && (

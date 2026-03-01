@@ -66,6 +66,11 @@ const AITools = () => {
       }
     };
 
+    const fetchWithTimeout = (url, options, timeoutMs = 15000) => {
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      return fetch(url, options).finally(() => clearTimeout(timeoutId));
+    };
+
     const fetchTools = async (retries = 3) => {
       try {
         setLoading(true);
@@ -73,10 +78,15 @@ const AITools = () => {
         if (!Base_Url) {
           throw new Error("API URL not configured");
         }
-        const response = await fetch(`${Base_Url}/api/aitools`, {
-          signal: controller.signal,
-          headers: { Accept: "application/json" },
-        });
+        const response = await fetchWithTimeout(
+          `${Base_Url}/api/aitools`,
+          {
+            signal: controller.signal,
+            headers: { Accept: "application/json" },
+            mode: "cors",
+          },
+          15000
+        );
         if (!response.ok) {
           throw new Error(`Failed to load tools (${response.status})`);
         }
@@ -87,9 +97,14 @@ const AITools = () => {
         setAiTools(data);
         setCachedTools(data);
       } catch (err) {
+        if (err.name === "AbortError" && retries > 0) {
+          // Timeout - retry with longer wait (server may be cold-starting)
+          await new Promise((r) => setTimeout(r, 3000));
+          return fetchTools(retries - 1);
+        }
         if (err.name === "AbortError") return;
         if (retries > 0 && (err.message === "Failed to fetch" || err.name === "TypeError")) {
-          await new Promise((r) => setTimeout(r, 2000));
+          await new Promise((r) => setTimeout(r, 3000));
           return fetchTools(retries - 1);
         }
         // Fall back to cached data on network failure
@@ -196,10 +211,25 @@ const AITools = () => {
         <div className="text-center mt-16 px-4">
           <p className="text-red-400 text-lg mb-2">Failed to load tools</p>
           <p className="text-gray-400 text-sm mb-4">
-            Please check your internet connection and try again.
+            The server may be starting up. Please wait a moment and try again.
           </p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => {
+              setError(null);
+              setLoading(true);
+              const retryController = new AbortController();
+              fetch(`${Base_Url}/api/aitools`, {
+                signal: retryController.signal,
+                headers: { Accept: "application/json" },
+                mode: "cors",
+              })
+                .then((res) => res.json())
+                .then((data) => {
+                  if (Array.isArray(data)) setAiTools(data);
+                })
+                .catch(() => setError("Still unable to load. Please try again later."))
+                .finally(() => setLoading(false));
+            }}
             className="px-6 py-3 bg-blue-500 rounded-lg font-semibold hover:bg-blue-600 transition-colors min-h-[44px]"
           >
             Try Again

@@ -1,3 +1,5 @@
+import crypto from "crypto";
+
 const requireApiKey = (req, res, next) => {
   const apiKey = req.headers["x-api-key"];
 
@@ -10,7 +12,11 @@ const requireApiKey = (req, res, next) => {
     return res.status(401).json({ error: "Missing API key. Provide X-API-Key header." });
   }
 
-  if (apiKey !== process.env.API_KEY) {
+  // Use timing-safe comparison to prevent timing attacks
+  const expected = Buffer.from(process.env.API_KEY);
+  const provided = Buffer.from(apiKey);
+
+  if (expected.length !== provided.length || !crypto.timingSafeEqual(expected, provided)) {
     return res.status(403).json({ error: "Invalid API key" });
   }
 

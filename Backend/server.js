@@ -21,13 +21,23 @@ for (const envVar of requiredEnvVars) {
 
 const app = express();
 
-// Security headers
-app.use(helmet());
+// Security headers - configured for cross-origin API access
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginOpenerPolicy: { policy: "unsafe-none" },
+    contentSecurityPolicy: false,
+    hsts: { maxAge: 31536000, includeSubDomains: true },
+    frameguard: { action: "deny" },
+    noSniff: true,
+    referrerPolicy: { policy: "strict-origin" },
+  })
+);
 
 // Response compression
 app.use(compression());
 
-// Rate limiting - 100 requests per 15 minutes per IP
+// Rate limiting - general: 100 requests per 15 minutes per IP
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -36,6 +46,15 @@ const limiter = rateLimit({
   message: { error: "Too many requests, please try again later" },
 });
 app.use(limiter);
+
+// Stricter rate limit for write operations (POST/DELETE)
+const writeLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many write requests, please try again later" },
+});
 
 // Body parsing with reasonable limits
 app.use(express.json({ limit: "1mb" }));
@@ -61,8 +80,13 @@ app.use(
   })
 );
 
-// API routes
-app.use("/api/aitools", aitoolsRouter);
+// API routes - apply write rate limiter to POST/DELETE
+app.use("/api/aitools", (req, res, next) => {
+  if (req.method === "POST" || req.method === "DELETE") {
+    return writeLimiter(req, res, next);
+  }
+  next();
+}, aitoolsRouter);
 
 // Health check endpoint
 app.get("/health", (req, res) => {

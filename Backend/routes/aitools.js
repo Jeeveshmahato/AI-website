@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { body, validationResult } from "express-validator";
+import mongoose from "mongoose";
 import AITool from "../models/AITool.js";
 import requireApiKey from "../middleware/auth.js";
 
@@ -78,6 +79,9 @@ router.post("/", requireApiKey, createToolValidation, async (req, res, next) => 
 // DELETE /api/aitools/:id - Protected
 router.delete("/:id", requireApiKey, async (req, res, next) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: "Invalid ID format" });
+    }
     const tool = await AITool.findByIdAndDelete(req.params.id);
     if (!tool) {
       return res.status(404).json({ error: "Tool not found" });
