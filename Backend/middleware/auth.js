@@ -1,22 +1,22 @@
 import crypto from "crypto";
+import { env } from "../config/env.js";
+
+// Hash both sides so timingSafeEqual always compares equal-length buffers
+// and the key length is not leaked through an early return.
+const digest = (value) => crypto.createHash("sha256").update(value).digest();
 
 const requireApiKey = (req, res, next) => {
-  const apiKey = req.headers["x-api-key"];
-
-  if (!process.env.API_KEY) {
-    console.warn("[AUTH] API_KEY not set in environment - rejecting request");
+  if (!env.apiKey) {
+    console.warn("[auth] API_KEY not set in environment - rejecting request");
     return res.status(503).json({ error: "Server authentication not configured" });
   }
 
+  const apiKey = req.get("x-api-key");
   if (!apiKey) {
     return res.status(401).json({ error: "Missing API key. Provide X-API-Key header." });
   }
 
-  // Use timing-safe comparison to prevent timing attacks
-  const expected = Buffer.from(process.env.API_KEY);
-  const provided = Buffer.from(apiKey);
-
-  if (expected.length !== provided.length || !crypto.timingSafeEqual(expected, provided)) {
+  if (!crypto.timingSafeEqual(digest(env.apiKey), digest(apiKey))) {
     return res.status(403).json({ error: "Invalid API key" });
   }
 

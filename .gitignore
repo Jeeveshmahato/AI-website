@@ -1,30 +1,26 @@
-# 🔒 Environment variables (never commit secrets)
-Backend/.env
-Frontend/.env
-Backend/.env
-# 📦 Dependency folders
-Backend/node_modules/
-Frontend/node_modules/
+# Environment variables: never commit secrets (commit the .env.example files instead)
+.env
+.env.*
+!.env.example
 
-# 🛠️ Build artifacts
+# Dependencies
+node_modules/
+
+# Build output
 Frontend/dist/
 Frontend/build/
+.vercel/
 
-# 📂 Lock files (optional—include if you're using lock consistency elsewhere)
-Backend/package-lock.json
-Frontend/package-lock.json
-
-# 🧪 Local testing logs
+# Logs
 *.log
 
-# 🛠️ Tooling configs (optional)
-Backend/vercel.json
-Frontend/vercel.json
-Frontend/render.yaml
+# Local tool settings
+.claude/settings.local.json
 
-# 💻 System/IDE files
+# OS / editor
 .vscode/
 .DS_Store
 Thumbs.db
-Backend/.env
-Backend/.env
+
+# Lockfiles and deploy configs (vercel.json, render.yaml) are intentionally tracked:
+# they make installs reproducible and deployments predictable.

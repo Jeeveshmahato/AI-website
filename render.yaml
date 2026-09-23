@@ -1,0 +1,59 @@
+# Render Blueprint: https://render.com/docs/blueprint-spec
+# Secrets are NOT stored here (sync: false). Set them in the Render dashboard.
+services:
+  - type: web
+    name: ai-website-backend
+    runtime: node
+    plan: free
+    region: oregon
+    rootDir: Backend
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22"
+      # Must exactly match the frontend origin (scheme + host, no trailing slash).
+      # Comma-separate extra origins, e.g. a custom domain.
+      - key: CLIENT_URL
+        value: https://ai-website-frontend.onrender.com
+      - key: MONGO_URI
+        sync: false
+      - key: API_KEY
+        sync: false
+
+  - type: web
+    name: ai-website-frontend
+    runtime: static
+    rootDir: Frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    autoDeploy: true
+    envVars:
+      # Baked in at build time: redeploy the frontend after changing it.
+      - key: VITE_BASEURL
+        value: https://ai-website-backend-yhbg.onrender.com
+    routes:
+      # SPA fallback so deep links like /tools/chatgpt don't 404 on refresh
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: Permissions-Policy
+        value: camera=(), microphone=(), geolocation=()

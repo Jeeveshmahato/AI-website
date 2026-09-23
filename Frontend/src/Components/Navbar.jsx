@@ -1,89 +1,113 @@
-import { useState, useCallback } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { FaBars, FaTimes } from "react-icons/fa";
+import { useEffect, useState } from "react";
+import { Link, NavLink, useLocation } from "react-router-dom";
+import { FiMenu, FiX, FiPlus } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "../lib/utils";
+import Logo from "./Logo";
 
 const NAV_ITEMS = [
-  { label: "Home", path: "/home" },
+  { label: "Explore", path: "/aitools" },
+  { label: "Categories", path: "/categories" },
+  { label: "Saved", path: "/saved" },
   { label: "About", path: "/about" },
-  { label: "AI Tools", path: "/aitools", desktopOnly: true },
   { label: "Contact", path: "/contact" },
-  { label: "Submit", path: "/submit" },
 ];
 
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
 
-  const closeMenu = useCallback(() => setMenuOpen(false), []);
+  useEffect(() => setMenuOpen(false), [location.pathname]);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e) => e.key === "Escape" && setMenuOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
+
+  const linkClass = ({ isActive }) =>
+    cn(
+      "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+      isActive ? "bg-white/[0.08] text-white" : "text-slate-400 hover:text-white"
+    );
 
   return (
-    <nav className="bg-gray-800 text-white p-4 sticky top-0 z-50">
-      <div className="flex justify-between items-center max-w-6xl mx-auto">
-        <Link to="/" className="text-xl font-bold" onClick={closeMenu}>
-          AI Project
+    <header
+      className={cn(
+        "sticky top-0 z-50 border-b transition-colors duration-300",
+        scrolled || menuOpen ? "border-white/[0.07] bg-ink-950/80 backdrop-blur-xl" : "border-transparent bg-transparent"
+      )}
+    >
+      <nav className="container-page flex h-16 items-center justify-between" aria-label="Main">
+        <Link to="/" className="rounded-lg" aria-label="AI Tools Hub home">
+          <Logo />
         </Link>
 
-        {/* Hamburger Button — touch-friendly 44px min target */}
-        <button
-          onClick={() => setMenuOpen((prev) => !prev)}
-          className="md:hidden text-xl p-2 -mr-2 min-w-[44px] min-h-[44px] flex items-center justify-center transition-transform transform hover:scale-110"
-          aria-label={menuOpen ? "Close menu" : "Open menu"}
-          aria-expanded={menuOpen}
-        >
-          {menuOpen ? <FaTimes /> : <FaBars />}
-        </button>
-
-        {/* Desktop Navigation */}
-        <ul className="hidden md:flex md:flex-row md:space-x-1">
+        <ul className="hidden items-center gap-1 md:flex">
           {NAV_ITEMS.map((item) => (
             <li key={item.path}>
-              <Link
-                to={item.path}
-                className={`block px-3 py-2 rounded-lg transition-colors ${
-                  location.pathname === item.path
-                    ? "bg-gray-700 text-white"
-                    : "hover:text-gray-400"
-                }`}
-              >
+              <NavLink to={item.path} className={linkClass}>
                 {item.label}
-              </Link>
+              </NavLink>
             </li>
           ))}
         </ul>
 
-        {/* Mobile Navigation */}
-        <AnimatePresence>
-          {menuOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-              className="absolute top-full left-0 w-full bg-gray-900 md:hidden shadow-lg"
-            >
-              <ul className="flex flex-col p-2">
-                {NAV_ITEMS.filter((item) => !item.desktopOnly).map((item) => (
-                  <li key={item.path}>
-                    <Link
-                      to={item.path}
-                      onClick={closeMenu}
-                      className={`block px-4 py-3 rounded-lg min-h-[44px] flex items-center transition-colors ${
-                        location.pathname === item.path
-                          ? "bg-gray-700 text-white"
-                          : "hover:bg-gray-800"
-                      }`}
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </nav>
+        <div className="hidden md:block">
+          <Link to="/submit" className="btn-primary min-h-10 px-4">
+            <FiPlus aria-hidden="true" /> Submit a tool
+          </Link>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setMenuOpen((o) => !o)}
+          className="-mr-2 flex size-11 items-center justify-center rounded-lg text-xl text-slate-200 md:hidden"
+          aria-label={menuOpen ? "Close menu" : "Open menu"}
+          aria-expanded={menuOpen}
+          aria-controls="mobile-menu"
+        >
+          {menuOpen ? <FiX /> : <FiMenu />}
+        </button>
+      </nav>
+
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            id="mobile-menu"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden border-t border-white/[0.07] md:hidden"
+          >
+            <ul className="container-page flex flex-col gap-1 py-3">
+              {NAV_ITEMS.map((item) => (
+                <li key={item.path}>
+                  <NavLink to={item.path} className={({ isActive }) => cn(linkClass({ isActive }), "flex min-h-11 items-center text-base")}>
+                    {item.label}
+                  </NavLink>
+                </li>
+              ))}
+              <li className="pt-2">
+                <Link to="/submit" className="btn-primary w-full">
+                  <FiPlus aria-hidden="true" /> Submit a tool
+                </Link>
+              </li>
+            </ul>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </header>
   );
 };
 

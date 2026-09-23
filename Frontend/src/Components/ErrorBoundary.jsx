@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { Component } from "react";
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -11,26 +11,31 @@ class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error('ErrorBoundary caught:', error, errorInfo);
+    console.error("ErrorBoundary caught:", error, errorInfo);
+    // A failed lazy-loaded chunk usually means a new deploy replaced old assets; reload once.
+    if (/Failed to fetch dynamically imported module|Importing a module script failed/i.test(error?.message)) {
+      try {
+        if (!sessionStorage.getItem("chunk_reload")) {
+          sessionStorage.setItem("chunk_reload", "1");
+          window.location.reload();
+        }
+      } catch {
+        // ignore
+      }
+    }
   }
 
   render() {
-    if (this.state.hasError) {
-      return (
-        <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-6">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-4 text-center">Something went wrong</h1>
-          <p className="text-gray-400 mb-6 text-center px-4 text-sm sm:text-base">An unexpected error occurred. Please try refreshing the page.</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-6 py-3 bg-blue-500 rounded-lg font-semibold hover:bg-blue-600 transition-colors min-h-[44px]"
-          >
-            Refresh Page
-          </button>
-        </div>
-      );
-    }
-
-    return this.props.children;
+    if (!this.state.hasError) return this.props.children;
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-ink-950 p-6 text-center">
+        <h1 className="text-2xl font-bold text-white sm:text-3xl">Something went wrong</h1>
+        <p className="mt-3 max-w-md text-slate-400">An unexpected error occurred. Refreshing the page usually fixes it.</p>
+        <button type="button" onClick={() => window.location.reload()} className="btn-primary mt-8">
+          Refresh page
+        </button>
+      </div>
+    );
   }
 }
 

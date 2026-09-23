@@ -1,34 +1,114 @@
 @import "tailwindcss";
 
-/* Mobile viewport fix — use dvh for real mobile viewport height */
-html, body, #root {
-  min-height: 100vh;
-  min-height: 100dvh;
-  -webkit-tap-highlight-color: transparent;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --color-ink-950: #07080d;
+  --color-ink-900: #0c0e16;
+  --color-ink-850: #11141f;
+  --color-ink-800: #161a28;
+  --color-ink-700: #212638;
+  --color-ink-600: #2d3349;
+  --animate-float: float 8s ease-in-out infinite;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0) }
+    50% { transform: translateY(-14px) }
+  }
+  @keyframes shimmer {
+    from { background-position: -400px 0 }
+    to { background-position: 400px 0 }
+  }
 }
 
-/* Prevent horizontal overflow on mobile */
-body {
-  overflow-x: hidden;
-}
-
-/* Fix iOS input zoom (font-size < 16px triggers zoom) */
-input, select, textarea {
-  font-size: 16px;
-}
-
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Safe area padding for notched devices */
-@supports (padding: env(safe-area-inset-bottom)) {
+@layer base {
+  html {
+    color-scheme: dark;
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
   body {
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-    padding-bottom: env(safe-area-inset-bottom);
+    @apply bg-ink-950 text-slate-200 font-sans antialiased;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html, body, #root {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+  /* 16px inputs stop iOS from zooming on focus */
+  input, select, textarea {
+    font-size: 16px;
+  }
+  ::selection {
+    @apply bg-indigo-500/40 text-white;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-indigo-400;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* Reusable component classes. Declared with @utility (not @layer components)
+   so Tailwind v4 lets them be composed with @apply and used with variants. */
+@utility container-page {
+  @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+}
+@utility text-gradient {
+  @apply bg-gradient-to-r from-indigo-300 via-violet-300 to-fuchsia-300 bg-clip-text text-transparent;
+}
+@utility card {
+  @apply rounded-2xl border border-white/[0.07] bg-ink-850/80 backdrop-blur-sm;
+}
+@utility btn {
+  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60;
+}
+@utility btn-primary {
+  @apply btn bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:brightness-110 active:scale-[0.98];
+}
+@utility btn-secondary {
+  @apply btn border border-white/10 bg-white/[0.04] text-slate-100 hover:border-white/20 hover:bg-white/[0.08];
+}
+@utility btn-ghost {
+  @apply btn text-slate-300 hover:bg-white/[0.06] hover:text-white;
+}
+@utility input {
+  @apply w-full rounded-xl border border-white/10 bg-ink-900 px-4 py-3 text-slate-100 placeholder:text-slate-500 transition-colors focus:border-indigo-400/60 focus:outline-none focus:ring-2 focus:ring-indigo-500/20;
+}
+@utility input-error {
+  @apply border-rose-400/60 focus:border-rose-400 focus:ring-rose-500/20;
+}
+@utility label {
+  @apply mb-1.5 block text-sm font-medium text-slate-300;
+}
+@utility badge {
+  @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset;
+}
+@utility eyebrow {
+  @apply text-sm font-semibold uppercase tracking-widest text-indigo-300;
+}
+@utility skeleton {
+  background: linear-gradient(90deg, rgb(255 255 255 / 0.03) 0, rgb(255 255 255 / 0.08) 40px, rgb(255 255 255 / 0.03) 80px);
+  background-size: 800px 100%;
+  @apply animate-shimmer rounded-lg;
+}
+@utility bg-grid {
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.04) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, #000 40%, transparent 100%);
+}
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
   }
 }

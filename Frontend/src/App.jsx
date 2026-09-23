@@ -1,67 +1,74 @@
-import { useState, useEffect, lazy, Suspense } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { lazy, Suspense, useEffect } from "react";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { MotionConfig } from "framer-motion";
 import Navbar from "./Components/Navbar";
+import Footer from "./Components/Footer";
 import ErrorBoundary from "./Components/ErrorBoundary";
+import { ToastProvider } from "./Components/Toast";
+import Home from "./pages/Home";
 
-const Home = lazy(() => import("./Components/Home"));
-const About = lazy(() => import("./Components/About"));
-const AITools = lazy(() => import("./Components/AITools"));
-const Contact = lazy(() => import("./Components/Contact"));
-const Submit = lazy(() => import("./Components/Submit"));
-const NotFound = lazy(() => import("./Components/NotFound"));
+// Home is eager (it's the landing page); everything else is code-split.
+const Directory = lazy(() => import("./pages/Directory"));
+const ToolDetail = lazy(() => import("./pages/ToolDetail"));
+const Categories = lazy(() => import("./pages/Categories"));
+const Submit = lazy(() => import("./pages/Submit"));
+const About = lazy(() => import("./pages/About"));
+const Contact = lazy(() => import("./pages/Contact"));
+const Admin = lazy(() => import("./pages/Admin"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
-function safeGetLocalStorage(key) {
-  try {
-    const saved = localStorage.getItem(key);
-    if (!saved) return null;
-    const parsed = JSON.parse(saved);
-    return Array.isArray(parsed) ? parsed : null;
-  } catch {
-    localStorage.removeItem(key);
-    return null;
-  }
-}
-
-const Loading = () => (
-  <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-    <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+const PageLoader = () => (
+  <div className="flex min-h-[60vh] items-center justify-center" role="status" aria-label="Loading">
+    <div className="size-8 animate-spin rounded-full border-2 border-indigo-400 border-t-transparent" />
   </div>
 );
 
-const App = () => {
-  const [aiTools, setAiTools] = useState(() => {
-    return safeGetLocalStorage("aiTools") || [
-      { name: "ChatGPT", category: "Chatbot", price: "Free", link: "https://chat.openai.com", description: "AI chatbot.", image: "https://via.placeholder.com/100" },
-      { name: "Stable Diffusion", category: "Image Generation", price: "Free", link: "https://stablediffusionweb.com", description: "Image generation AI.", image: "https://via.placeholder.com/100" }
-    ];
-  });
-
+// Scroll to top on navigation, except when only the query string changes (filters).
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
   useEffect(() => {
-    try {
-      localStorage.setItem("aiTools", JSON.stringify(aiTools));
-    } catch {
-      // localStorage full or unavailable — silently ignore
-    }
-  }, [aiTools]);
-
-  return (
-    <ErrorBoundary>
-      <Router>
-        <Navbar />
-        <Suspense fallback={<Loading />}>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/home" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/aitools" element={<AITools />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/submit" element={<Submit aiTools={aiTools} setAiTools={setAiTools} />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
-      </Router>
-    </ErrorBoundary>
-  );
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
 };
+
+const App = () => (
+  <ErrorBoundary>
+    <MotionConfig reducedMotion="user">
+      <ToastProvider>
+        <BrowserRouter>
+          <ScrollToTop />
+          <a
+            href="#main"
+            className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-lg focus:bg-indigo-500 focus:px-4 focus:py-2 focus:text-white"
+          >
+            Skip to content
+          </a>
+          <div className="flex min-h-screen flex-col">
+            <Navbar />
+            <main id="main" className="flex-1">
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/home" element={<Navigate to="/" replace />} />
+                  <Route path="/aitools" element={<Directory key="all" />} />
+                  <Route path="/saved" element={<Directory key="saved" savedOnly />} />
+                  <Route path="/tools/:slug" element={<ToolDetail />} />
+                  <Route path="/categories" element={<Categories />} />
+                  <Route path="/submit" element={<Submit />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="/admin" element={<Admin />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
+            </main>
+            <Footer />
+          </div>
+        </BrowserRouter>
+      </ToastProvider>
+    </MotionConfig>
+  </ErrorBoundary>
+);
 
 export default App;
