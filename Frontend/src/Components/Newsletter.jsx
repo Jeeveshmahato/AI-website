@@ -1,5 +1,5 @@
 ﻿import { useId, useState } from "react";
-import { FiSend, FiCheck } from "react-icons/fi";
+import { FiCheck } from "react-icons/fi";
 import { api } from "../lib/api";
 import { cn } from "../lib/utils";
 
@@ -30,7 +30,7 @@ const Newsletter = () => {
 
   if (status === "done") {
     return (
-      <p className="flex items-center gap-2 text-sm text-emerald-300" role="status">
+      <p className="flex items-center gap-2 text-sm text-success" role="status">
         <FiCheck aria-hidden="true" /> {message}
       </p>
     );
@@ -52,16 +52,16 @@ const Newsletter = () => {
             setEmail(e.target.value);
             if (status === "error") setStatus("idle");
           }}
-          className={cn("input min-w-0 flex-1", status === "error" && "input-error")}
+          className={cn("input min-w-0 flex-1 py-2", status === "error" && "input-error")}
           aria-invalid={status === "error"}
           aria-describedby={`${id}-msg`}
         />
         <button type="submit" className="btn-primary shrink-0" disabled={status === "loading"}>
-          {status === "loading" ? "Subscribing…" : <>Subscribe <FiSend aria-hidden="true" /></>}
+          {status === "loading" ? "Subscribing…" : "Subscribe"}
         </button>
       </div>
-      <p id={`${id}-msg`} className={cn("mt-2 text-xs", status === "error" ? "text-rose-300" : "text-slate-500")}>
-        {status === "error" ? message : "The best new AI tools in your inbox. No spam, ever."}
+      <p id={`${id}-msg`} className={cn("mt-2 text-xs", status === "error" ? "text-danger" : "text-fg-subtle")}>
+        {status === "error" ? message : "No spam. We only email when there's something worth trying."}
       </p>
     </form>
   );

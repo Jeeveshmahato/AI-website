@@ -84,10 +84,10 @@ const Palette = ({ dialogRef, onClose }) => {
       onClose={onClose}
       onClick={(e) => e.target === dialogRef.current && onClose()}
       aria-label="Search AI Tools Hub"
-      className="m-0 mx-auto mt-[10vh] w-[calc(100%-2rem)] max-w-xl overflow-hidden rounded-2xl border border-white/10 bg-ink-850 p-0 text-slate-200 shadow-2xl backdrop:bg-black/60 backdrop:backdrop-blur-sm"
+      className="m-0 mx-auto mt-[12vh] w-[calc(100%-2rem)] max-w-xl animate-pop overflow-hidden rounded-xl border border-line bg-surface p-0 text-fg shadow-[0_16px_48px_rgb(0_0_0/0.18)] backdrop:bg-black/40"
     >
-      <div className="flex items-center gap-3 border-b border-white/[0.07] px-4">
-        <FiSearch className="shrink-0 text-lg text-slate-500" aria-hidden="true" />
+      <div className="flex items-center gap-3 border-b border-line px-4">
+        <FiSearch className="shrink-0 text-lg text-fg-subtle" aria-hidden="true" />
         <input
           autoFocus
           type="text"
@@ -100,19 +100,19 @@ const Palette = ({ dialogRef, onClose }) => {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={onKeyDown}
-          className="h-14 min-w-0 flex-1 bg-transparent text-slate-100 placeholder:text-slate-500 focus:outline-none"
+          className="h-14 min-w-0 flex-1 bg-transparent text-fg placeholder:text-fg-subtle focus:outline-none"
         />
-        <kbd className="rounded-md border border-white/10 px-1.5 py-0.5 text-[11px] text-slate-500">Esc</kbd>
+        <kbd className="kbd px-1.5">Esc</kbd>
       </div>
 
       <ul id="palette-list" ref={listRef} role="listbox" className="max-h-[60vh] overflow-y-auto p-2">
-        {items.length === 0 && <li className="px-3 py-8 text-center text-sm text-slate-500">No results</li>}
+        {items.length === 0 && <li className="px-3 py-8 text-center text-sm text-fg-subtle">No results</li>}
         {items.map((item, index) => {
           const header = item.group !== lastGroup ? item.group : null;
           lastGroup = item.group;
           return (
             <li key={item.id} role="presentation">
-              {header && <p className="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-slate-500">{header}</p>}
+              {header && <p className="px-3 pb-1.5 pt-3 text-xs font-medium text-fg-subtle">{header}</p>}
               <div
                 id={`palette-${index}`}
                 data-index={index}
@@ -121,25 +121,25 @@ const Palette = ({ dialogRef, onClose }) => {
                 onMouseMove={() => setActive(index)}
                 onClick={() => go(item)}
                 className={cn(
-                  "flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5",
-                  index === active ? "bg-white/[0.07] text-white" : "text-slate-300"
+                  "flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2",
+                  index === active ? "bg-surface-2 text-fg" : "text-fg-muted"
                 )}
               >
                 {item.tool ? (
-                  <ToolLogo tool={item.tool} size="sm" className="size-8 rounded-lg" />
+                  <ToolLogo tool={item.tool} size="xs" />
                 ) : (
-                  <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/5 text-slate-400">
+                  <span className="flex size-7 shrink-0 items-center justify-center rounded-md border border-line bg-surface-2 text-fg-muted">
                     {item.icon ? <item.icon aria-hidden="true" /> : item.group === "Recently viewed" ? <FiClock /> : <FiLayers />}
                   </span>
                 )}
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-medium">{item.label}</span>
-                  {item.hint && <span className="block truncate text-xs text-slate-500">{item.hint}</span>}
+                  {item.hint && <span className="block truncate text-xs text-fg-subtle">{item.hint}</span>}
                 </span>
                 {index === active ? (
-                  <FiCornerDownLeft className="shrink-0 text-slate-500" aria-hidden="true" />
+                  <FiCornerDownLeft className="shrink-0 text-fg-subtle" aria-hidden="true" />
                 ) : (
-                  <FiArrowRight className="shrink-0 text-slate-600" aria-hidden="true" />
+                  <FiArrowRight className="shrink-0 text-fg-subtle" aria-hidden="true" />
                 )}
               </div>
             </li>
@@ -147,12 +147,13 @@ const Palette = ({ dialogRef, onClose }) => {
         })}
       </ul>
 
-      <div className="hidden items-center gap-4 border-t border-white/[0.07] px-4 py-2.5 text-xs text-slate-500 sm:flex">
-        <span>
-          <kbd className="font-sans">↑↓</kbd> to navigate
+      <div className="hidden items-center gap-4 border-t border-line px-4 py-2.5 text-xs text-fg-subtle sm:flex">
+        <span className="flex items-center gap-1.5">
+          <kbd className="kbd">↑</kbd>
+          <kbd className="kbd">↓</kbd> navigate
         </span>
-        <span>
-          <kbd className="font-sans">↵</kbd> to open
+        <span className="flex items-center gap-1.5">
+          <kbd className="kbd">↵</kbd> open
         </span>
         <span className="ml-auto">{shortcutLabel} to toggle</span>
       </div>

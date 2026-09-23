@@ -6,6 +6,15 @@ A hand-curated directory of AI tools: search, filter, compare, upvote and save t
 - **Backend:** Express 5, MongoDB/Mongoose (`Backend/`)
 - **Hosting:** Render (blueprint in `render.yaml`); Vercel also supported
 
+## Design system
+
+Defined once in `Frontend/src/index.css` as semantic tokens (`canvas`, `surface`, `line`, `fg`, `fg-muted`, `accent`…) with light and dark values. The theme follows the OS, can be toggled, and is applied before first paint (no flash).
+
+- Warm neutrals carry the UI. The single orange accent is reserved for the brand mark, selected states (upvoted, saved, comparing), the featured star and focus rings.
+- Primary buttons are inverted neutrals, not accent-coloured.
+- All text colours meet WCAG AA (≥ 4.5:1) in both themes. Contrast ratios are documented next to the tokens.
+- Typeface: Geist / Geist Mono (numbers, counts, metadata).
+
 ## Features
 
 | Area | What you get |

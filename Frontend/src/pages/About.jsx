@@ -1,88 +1,95 @@
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { FiCheck, FiArrowRight, FiTarget, FiEye, FiUsers } from "react-icons/fi";
+import { FiCheck } from "react-icons/fi";
 import Seo from "../Components/Seo";
+import { useTools } from "../lib/toolsStore";
 
 const PRINCIPLES = [
-  { icon: FiTarget, title: "Useful over hyped", text: "We list tools that solve real problems today, not vaporware or thin wrappers." },
-  { icon: FiEye, title: "Transparent", text: "Clear pricing labels, no hidden paid placements, and links straight to the source." },
-  { icon: FiUsers, title: "Community-powered", text: "Anyone can suggest a tool, and upvotes help the best ones rise to the top." },
+  { title: "Useful over hyped", text: "We list tools that solve real problems today, not waitlists or thin wrappers." },
+  { title: "Honest labels", text: "Every tool is marked Free, Freemium or Paid, and links go straight to the source." },
+  { title: "Community signal", text: "Anyone can suggest a tool. Upvotes help the genuinely useful ones rise." },
 ];
 
 const CRITERIA = [
   "The product is live and publicly accessible",
-  "It uses AI in a meaningful way, not just a label",
+  "It uses AI in a meaningful way, not just as a label",
   "Pricing is clear and accurately represented",
   "The website is secure (https) and trustworthy",
   "It isn't a duplicate of an existing listing",
 ];
 
-const About = () => (
-  <div className="container-page pt-10 sm:pt-14">
-    <Seo title="About" description="Why we built AI Tools Hub and how we curate the tools in our directory." />
+const About = () => {
+  const { tools } = useTools();
+  return (
+    <div className="container-page max-w-3xl pt-14">
+      <Seo title="About" description="Why AI Tools Hub exists and how tools are reviewed before they're listed." />
 
-    <motion.header initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mx-auto max-w-3xl text-center">
-      <p className="eyebrow">About us</p>
-      <h1 className="mt-3 text-4xl font-bold tracking-tight text-white sm:text-6xl">
-        Helping everyone find <span className="text-gradient">AI that works</span>
-      </h1>
-      <p className="mt-6 text-lg leading-relaxed text-slate-400">
-        New AI tools launch every day, and most lists are either outdated or pay-to-play. AI Tools Hub is a clean, honest,
-        hand-curated directory that helps you find the right tool fast.
+      <h1 className="text-4xl font-semibold tracking-tight text-fg">About AI Tools Hub</h1>
+      <p className="mt-5 text-lg leading-relaxed text-fg-muted">
+        New AI tools launch every day, and most lists are either outdated or pay-to-play. AI Tools Hub is a small, independent
+        directory with one goal: help you find a tool that actually fits the job, quickly.
       </p>
-    </motion.header>
 
-    <section className="mt-20 grid gap-4 md:grid-cols-3" aria-label="Our principles">
-      {PRINCIPLES.map((p, i) => (
-        <motion.div
-          key={p.title}
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: i * 0.08 }}
-          className="card p-7"
-        >
-          <p.icon className="text-2xl text-violet-300" aria-hidden="true" />
-          <h2 className="mt-4 text-lg font-semibold text-white">{p.title}</h2>
-          <p className="mt-2 leading-relaxed text-slate-400">{p.text}</p>
-        </motion.div>
-      ))}
-    </section>
-
-    <section className="mt-24 grid gap-10 lg:grid-cols-2 lg:items-center">
-      <div>
-        <p className="eyebrow">Our curation process</p>
-        <h2 className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">Every listing is reviewed by a person</h2>
-        <p className="mt-4 leading-relaxed text-slate-400">
-          Submissions go into a moderation queue. Before a tool appears in the directory, we check it against a short list of
-          standards so that what you find here is worth clicking.
-        </p>
-      </div>
-      <ul className="card space-y-4 p-7">
-        {CRITERIA.map((c) => (
-          <li key={c} className="flex gap-3 text-slate-300">
-            <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-xs text-emerald-300">
-              <FiCheck aria-hidden="true" />
-            </span>
-            {c}
-          </li>
+      <dl className="mt-10 grid grid-cols-3 divide-x divide-line rounded-xl border border-line">
+        {[
+          { label: "Tools listed", value: tools.length },
+          { label: "Categories", value: new Set(tools.map((t) => t.category)).size },
+          { label: "Account needed", value: "None" },
+        ].map((s) => (
+          <div key={s.label} className="px-4 py-5">
+            <dt className="text-xs text-fg-subtle">{s.label}</dt>
+            <dd className="mt-1 font-mono text-2xl font-medium tabular-nums text-fg">{s.value}</dd>
+          </div>
         ))}
-      </ul>
-    </section>
+      </dl>
 
-    <section className="mt-24 rounded-3xl border border-white/10 bg-gradient-to-br from-indigo-600/25 via-violet-600/15 to-fuchsia-600/20 px-6 py-14 text-center sm:px-12">
-      <h2 className="text-3xl font-bold tracking-tight text-white">Know a tool we should list?</h2>
-      <p className="mx-auto mt-3 max-w-xl text-slate-300">Help the community discover it. Submitting takes about two minutes.</p>
-      <div className="mt-8 flex flex-wrap justify-center gap-3">
-        <Link to="/submit" className="btn-primary">
-          Submit a tool <FiArrowRight aria-hidden="true" />
-        </Link>
-        <Link to="/aitools" className="btn-secondary">
-          Explore the directory
-        </Link>
-      </div>
-    </section>
-  </div>
-);
+      <section className="mt-14" aria-labelledby="principles">
+        <h2 id="principles" className="section-title">
+          What we care about
+        </h2>
+        <dl className="mt-5 divide-y divide-line border-y border-line">
+          {PRINCIPLES.map((p) => (
+            <div key={p.title} className="grid gap-1 py-4 sm:grid-cols-3 sm:gap-6">
+              <dt className="font-medium text-fg">{p.title}</dt>
+              <dd className="text-fg-muted sm:col-span-2">{p.text}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      <section className="mt-14" aria-labelledby="review">
+        <h2 id="review" className="section-title">
+          How tools are reviewed
+        </h2>
+        <p className="mt-3 leading-relaxed text-fg-muted">
+          Submissions go into a moderation queue. Before a tool appears in the directory, a person checks it against these
+          standards:
+        </p>
+        <ul className="mt-5 space-y-3">
+          {CRITERIA.map((c) => (
+            <li key={c} className="flex gap-3 text-fg">
+              <FiCheck className="mt-1 shrink-0 text-success" aria-hidden="true" />
+              {c}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="mt-14 flex flex-col items-start gap-4 rounded-xl border border-line bg-surface-2 p-6 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="font-semibold text-fg">Know a tool we should list?</h2>
+          <p className="mt-1 text-sm text-fg-muted">Submitting takes about two minutes.</p>
+        </div>
+        <div className="flex gap-2">
+          <Link to="/contact" className="btn-secondary">
+            Contact
+          </Link>
+          <Link to="/submit" className="btn-primary">
+            Submit a tool
+          </Link>
+        </div>
+      </section>
+    </div>
+  );
+};
 
 export default About;

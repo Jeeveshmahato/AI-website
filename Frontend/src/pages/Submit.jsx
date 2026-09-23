@@ -4,7 +4,7 @@ import { FiCheckCircle, FiEye, FiShield, FiUsers, FiZap } from "react-icons/fi";
 import Seo from "../Components/Seo";
 import ToolCard from "../Components/ToolCard";
 import { api } from "../lib/api";
-import { CATEGORY_NAMES, PRICING } from "../lib/constants";
+import { CATEGORY_NAMES, PRICING, PRICING_DOT } from "../lib/constants";
 import { cn, isHttpUrl } from "../lib/utils";
 
 const EMPTY = {
@@ -34,15 +34,15 @@ function validate(v) {
 const Field = ({ id, label, error, hint, optional, children }) => (
   <div>
     <label htmlFor={id} className="label">
-      {label} {optional && <span className="font-normal text-slate-500">(optional)</span>}
+      {label} {optional && <span className="font-normal text-fg-subtle">(optional)</span>}
     </label>
     {children}
     {error ? (
-      <p id={`${id}-error`} className="mt-1.5 text-sm text-rose-300">
+      <p id={`${id}-error`} className="mt-1.5 text-sm text-danger">
         {error}
       </p>
     ) : (
-      hint && <p className="mt-1.5 text-xs text-slate-500">{hint}</p>
+      hint && <p className="mt-1.5 text-xs text-fg-subtle">{hint}</p>
     )}
   </div>
 );
@@ -116,16 +116,14 @@ const Submit = () => {
 
   if (status === "done") {
     return (
-      <div className="container-page flex max-w-xl flex-col items-center pt-20 text-center">
+      <div className="container-page flex max-w-xl flex-col items-start pt-20">
         <Seo title="Submission received" noindex />
-        <span className="flex size-16 items-center justify-center rounded-full bg-emerald-500/15 text-3xl text-emerald-300">
-          <FiCheckCircle aria-hidden="true" />
-        </span>
-        <h1 className="mt-6 text-3xl font-bold text-white">Thanks for your submission!</h1>
-        <p className="mt-3 text-slate-400">
-          <span className="text-white">{values.name}</span> is in our review queue. Once approved, it will appear in the directory.
+        <FiCheckCircle className="text-2xl text-success" aria-hidden="true" />
+        <h1 className="mt-4 text-3xl font-semibold tracking-tight text-fg">Submission received</h1>
+        <p className="mt-2 text-fg-muted">
+          <span className="text-fg">{values.name}</span> is in our review queue. Once approved, it will appear in the directory.
         </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
+        <div className="mt-8 flex flex-wrap gap-2">
           <button
             type="button"
             onClick={() => {
@@ -145,24 +143,24 @@ const Submit = () => {
   }
 
   return (
-    <div className="container-page pt-10 sm:pt-14">
+    <div className="container-page pt-10">
       <Seo title="Submit an AI tool" description="List your AI tool on AI Tools Hub for free and reach people actively looking for AI tools." />
-      <header className="max-w-3xl">
-        <h1 className="text-3xl font-bold tracking-tight text-white sm:text-5xl">Submit an AI tool</h1>
-        <p className="mt-3 text-slate-400">Built something great, or found a gem we're missing? Tell us about it.</p>
-        <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-300">
+      <header className="border-b border-line pb-6">
+        <h1 className="text-3xl font-semibold tracking-tight text-fg">Submit a tool</h1>
+        <p className="mt-1 text-fg-muted">Built something great, or found a gem we're missing? Tell us about it.</p>
+        <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-fg-muted">
           {PERKS.map((p) => (
             <li key={p.text} className="flex items-center gap-2">
-              <p.icon className="text-indigo-300" aria-hidden="true" /> {p.text}
+              <p.icon className="text-fg-subtle" aria-hidden="true" /> {p.text}
             </li>
           ))}
         </ul>
       </header>
 
-      <div className="mt-10 grid gap-10 lg:grid-cols-5">
-        <form onSubmit={onSubmit} noValidate className="card space-y-6 p-6 sm:p-8 lg:col-span-3">
+      <div className="mt-8 grid gap-10 lg:grid-cols-5">
+        <form onSubmit={onSubmit} noValidate className="space-y-6 lg:col-span-3">
           {formError && (
-            <div role="alert" className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-200">
+            <div role="alert" className="rounded-lg border border-danger/40 bg-danger/10 p-3 text-sm text-danger">
               {formError}
             </div>
           )}
@@ -200,11 +198,12 @@ const Submit = () => {
                   <label
                     key={p}
                     className={cn(
-                      "flex min-h-12 cursor-pointer items-center justify-center rounded-xl border text-sm font-medium transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-indigo-400",
-                      values.price === p ? "border-indigo-400/50 bg-indigo-500/15 text-white" : "border-white/10 text-slate-400 hover:text-white"
+                      "flex h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border text-sm transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent",
+                      values.price === p ? "border-fg bg-surface font-medium text-fg" : "border-line bg-surface text-fg-muted hover:border-line-strong hover:text-fg"
                     )}
                   >
                     <input type="radio" name="price" value={p} checked={values.price === p} onChange={set("price")} className="sr-only" />
+                    <span className={cn("size-1.5 rounded-full", PRICING_DOT[p])} aria-hidden="true" />
                     {p}
                   </label>
                 ))}
@@ -235,23 +234,23 @@ const Submit = () => {
             <input id={`${id}-website`} name="website" tabIndex={-1} autoComplete="off" value={values.website} onChange={set("website")} />
           </div>
 
-          <button type="submit" className="btn-primary w-full min-h-12" disabled={status === "submitting"}>
+          <button type="submit" className="btn-primary h-11 w-full" disabled={status === "submitting"}>
             {status === "submitting" ? "Submitting…" : "Submit for review"}
           </button>
-          <p className="text-center text-xs text-slate-500">
+          <p className="text-center text-xs text-fg-subtle">
             By submitting you confirm the information is accurate and you're allowed to share it.
           </p>
         </form>
 
         <aside className="lg:col-span-2">
-          <div className="lg:sticky lg:top-24">
-            <p className="flex items-center gap-2 text-sm font-medium text-slate-400">
+          <div className="rounded-xl border border-line bg-surface-2 p-5 lg:sticky lg:top-20">
+            <p className="flex items-center gap-2 text-xs font-medium text-fg-subtle">
               <FiEye aria-hidden="true" /> Live preview
             </p>
             <div className="mt-3" inert>
               <ToolCard key={`${preview.link}|${preview.image}`} tool={preview} />
             </div>
-            <p className="mt-4 text-sm text-slate-500">This is how your tool will appear in the directory once approved.</p>
+            <p className="mt-4 text-sm text-fg-subtle">This is how your tool will appear in the directory once approved.</p>
           </div>
         </aside>
       </div>

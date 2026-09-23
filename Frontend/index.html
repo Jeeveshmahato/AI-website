@@ -3,36 +3,48 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#07080d" />
-    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#ffffff" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- Apply the saved/system theme before first paint to avoid a flash. -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("theme");
+          var dark = t === "dark" || (t !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+          if (dark) {
+            document.documentElement.classList.add("dark");
+            document.querySelector('meta[name="theme-color"]').setAttribute("content", "#0b0b0a");
+          }
+        } catch (e) {}
+      })();
+    </script>
 
     <!-- Static tags for social previews (scrapers don't run JavaScript) -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="AI Tools Hub" />
-    <meta property="og:title" content="AI Tools Hub | Discover the best AI tools for every task" />
-    <meta property="og:description" content="A hand-curated directory of the best AI tools for writing, images, video, coding and research, with honest pricing." />
+    <meta property="og:title" content="AI Tools Hub: the curated directory of AI tools" />
+    <meta property="og:description" content="Hand-reviewed AI tools with clear pricing. Search by task, compare side by side, and keep a shortlist." />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="AI Tools Hub" />
-    <meta name="twitter:description" content="Discover and compare the best AI tools for every task." />
+    <meta name="twitter:description" content="Hand-reviewed AI tools with clear pricing." />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
     <link rel="dns-prefetch" href="https://www.google.com" />
 
-    <title>AI Tools Hub | Discover the best AI tools for every task</title>
+    <title>AI Tools Hub: the curated directory of AI tools</title>
     <style>
-      /* Avoid a white flash before CSS loads */
-      html, body { margin: 0; background: #07080d; }
+      /* Match the theme background before CSS loads */
+      html, body { margin: 0; background: #fff; }
+      html.dark, html.dark body { background: #0b0b0a; }
     </style>
   </head>
   <body>
     <noscript>
-      <p style="color:#e2e8f0;font-family:system-ui;padding:2rem;text-align:center">
-        AI Tools Hub needs JavaScript enabled to browse the directory.
-      </p>
+      <p style="font-family:system-ui;padding:2rem;text-align:center">AI Tools Hub needs JavaScript enabled to browse the directory.</p>
     </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>

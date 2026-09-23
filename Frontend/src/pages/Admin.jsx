@@ -47,8 +47,8 @@ const Login = ({ onLogin }) => {
 
   return (
     <form onSubmit={submit} className="card mx-auto mt-16 max-w-md space-y-4 p-8">
-      <h1 className="text-2xl font-bold text-white">Admin</h1>
-      <p className="text-sm text-slate-400">Enter the backend API_KEY to moderate submissions.</p>
+      <h1 className="text-2xl font-semibold tracking-tight text-fg">Admin</h1>
+      <p className="text-sm text-fg-muted">Enter the backend API_KEY to moderate submissions.</p>
       <label htmlFor="admin-key" className="sr-only">
         API key
       </label>
@@ -61,7 +61,7 @@ const Login = ({ onLogin }) => {
         className={cn("input", error && "input-error")}
         placeholder="API key"
       />
-      {error && <p className="text-sm text-rose-300">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
       <button type="submit" className="btn-primary w-full" disabled={busy || !value.trim()}>
         {busy ? "Checking…" : "Sign in"}
       </button>
@@ -149,7 +149,7 @@ const Admin = () => {
     <div className="container-page pt-10">
       <Seo title="Admin" noindex />
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-3xl font-bold text-white">Moderation</h1>
+        <h1 className="text-3xl font-semibold tracking-tight text-fg">Moderation</h1>
         <div className="flex gap-2">
           <button type="button" onClick={refresh} className="btn-secondary" disabled={loading}>
             <FiRefreshCw className={cn(loading && "animate-spin")} aria-hidden="true" /> Refresh
@@ -161,7 +161,7 @@ const Admin = () => {
       </div>
 
       {summary && (
-        <p className="mt-2 text-sm text-slate-400">
+        <p className="mt-2 text-sm text-fg-muted">
           {summary.subscribers} newsletter subscribers · {summary.messages} messages total
         </p>
       )}
@@ -176,29 +176,29 @@ const Admin = () => {
             onClick={() => setTab(t.key)}
             className={cn(
               "min-h-10 shrink-0 rounded-lg px-4 text-sm font-medium",
-              tab === t.key ? "bg-white/10 text-white" : "text-slate-400 hover:text-white"
+              tab === t.key ? "bg-surface-2 text-fg" : "text-fg-muted hover:text-fg"
             )}
           >
             {t.label}
             {counts && counts[t.key] > 0 && (
-              <span className="ml-2 rounded-full bg-indigo-500/20 px-2 py-0.5 text-xs text-indigo-200">{counts[t.key]}</span>
+              <span className="ml-2 rounded-full bg-accent-soft px-2 py-0.5 text-xs text-accent">{counts[t.key]}</span>
             )}
           </button>
         ))}
       </div>
 
       <div className="mt-6 space-y-3" role="tabpanel">
-        {!loading && items.length === 0 && <p className="card p-8 text-center text-slate-400">Nothing here.</p>}
+        {!loading && items.length === 0 && <p className="card p-8 text-center text-fg-muted">Nothing here.</p>}
 
         {tab === "messages"
           ? items.map((m) => (
-              <article key={m._id} className={cn("card p-5", !m.read && "border-indigo-400/30")}>
+              <article key={m._id} className={cn("card p-5", !m.read && "border-accent/40")}>
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
-                    <h2 className="font-semibold text-white">{m.subject || "(no subject)"}</h2>
-                    <p className="text-sm text-slate-400">
+                    <h2 className="font-semibold text-fg">{m.subject || "(no subject)"}</h2>
+                    <p className="text-sm text-fg-muted">
                       {m.name} ·{" "}
-                      <a href={`mailto:${m.email}`} className="text-indigo-300 hover:underline">
+                      <a href={`mailto:${m.email}`} className="text-accent hover:underline">
                         {m.email}
                       </a>{" "}
                       · {formatDate(m.createdAt)}
@@ -215,7 +215,7 @@ const Admin = () => {
                     )}
                   </div>
                 </div>
-                <p className="mt-3 whitespace-pre-line text-slate-300">{m.message}</p>
+                <p className="mt-3 whitespace-pre-line text-fg-muted">{m.message}</p>
               </article>
             ))
           : items.map((t) => (
@@ -223,18 +223,18 @@ const Admin = () => {
                 <ToolLogo tool={t} />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="font-semibold text-white">{t.name}</h2>
-                    {t.featured && <FiStar className="fill-amber-300 text-amber-300" aria-label="Featured" />}
-                    <span className="text-sm text-slate-500">
+                    <h2 className="font-semibold text-fg">{t.name}</h2>
+                    {t.featured && <FiStar className="fill-amber-300 text-warning" aria-label="Featured" />}
+                    <span className="text-sm text-fg-subtle">
                       {t.category} · {t.price} · {formatDate(t.createdAt)}
                     </span>
                   </div>
-                  <a href={safeUrl(t.link)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-indigo-300 hover:underline">
+                  <a href={safeUrl(t.link)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-accent hover:underline">
                     {getDomain(t.link)} <FiExternalLink aria-hidden="true" />
                   </a>
-                  {t.tagline && <p className="mt-2 text-sm text-slate-200">{t.tagline}</p>}
-                  <p className="mt-1 line-clamp-3 text-sm text-slate-400">{t.description}</p>
-                  {t.submitterEmail && <p className="mt-2 text-xs text-slate-500">Submitted by {t.submitterEmail}</p>}
+                  {t.tagline && <p className="mt-2 text-sm text-fg">{t.tagline}</p>}
+                  <p className="mt-1 line-clamp-3 text-sm text-fg-muted">{t.description}</p>
+                  {t.submitterEmail && <p className="mt-2 text-xs text-fg-subtle">Submitted by {t.submitterEmail}</p>}
                 </div>
                 <div className="flex flex-wrap gap-2 md:justify-end">
                   {t.status !== "approved" && (
@@ -254,7 +254,7 @@ const Admin = () => {
                   )}
                   <button
                     type="button"
-                    className="btn-ghost min-h-9 text-rose-300 hover:text-rose-200"
+                    className="btn-ghost min-h-9 text-danger hover:text-danger"
                     onClick={() => window.confirm(`Delete ${t.name} permanently?`) && act(() => client.deleteTool(t._id), `${t.name} deleted`)}
                   >
                     <FiTrash2 aria-hidden="true" /> Delete

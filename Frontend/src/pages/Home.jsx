@@ -1,57 +1,35 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import {
-  FiArrowRight,
-  FiSearch,
-  FiCompass,
-  FiLayers,
-  FiExternalLink,
-  FiShield,
-  FiRefreshCw,
-  FiDollarSign,
-  FiHeart,
-  FiPlus,
-  FiChevronDown,
-  FiSun,
-  FiClock,
-} from "react-icons/fi";
+import { FiArrowRight, FiSearch, FiPlus } from "react-icons/fi";
 import Seo from "../Components/Seo";
-import ToolCard, { VisitLink } from "../Components/ToolCard";
+import { ToolRow, VisitLink } from "../Components/ToolCard";
 import ToolLogo from "../Components/ToolLogo";
-import Newsletter from "../Components/Newsletter";
+import PriceTag from "../Components/PriceTag";
 import CollectionCard from "../Components/CollectionCard";
+import SyncStatus from "../Components/SyncStatus";
 import collections from "../data/collections";
 import { useTools } from "../lib/toolsStore";
 import { useRecent, resolveKeys } from "../lib/personal";
-import { CATEGORIES, PRICING_STYLES } from "../lib/constants";
+import { CATEGORIES } from "../lib/constants";
 import { sortTools } from "../lib/filters";
-import { cn, toolKey, toolPath } from "../lib/utils";
+import { cn, formatCount, formatDate, toolKey, toolPath } from "../lib/utils";
 
-const POPULAR_SEARCHES = ["Chatbot", "Image", "Video", "Coding", "Voice", "Free"];
+const QUICK_LINKS = ["Chatbot", "Image Generation", "Code Assistance", "Video Generation", "Writing Assistant"];
 
-const fadeUp = {
-  initial: { opacity: 0, y: 24 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, margin: "-80px" },
-  transition: { duration: 0.5, ease: "easeOut" },
-};
-
-const SectionHeader = ({ eyebrow, title, subtitle, action }) => (
-  <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-    <div className="max-w-2xl">
-      <p className="eyebrow">{eyebrow}</p>
-      <h2 className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">{title}</h2>
-      {subtitle && <p className="mt-3 text-slate-400">{subtitle}</p>}
-    </div>
-    {action}
-  </div>
-);
-
-const Hero = ({ tools, total }) => {
+const Hero = ({ tools }) => {
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
-  const floating = tools.filter((t) => t.featured).slice(0, 6);
+
+  const meta = useMemo(() => {
+    const categories = new Set(tools.map((t) => t.category)).size;
+    const latest = tools.reduce((max, t) => {
+      const d = new Date(t.updatedAt || t.createdAt || 0).getTime();
+      return d > max ? d : max;
+    }, 0);
+    return { categories, updated: latest ? formatDate(latest) : null };
+  }, [tools]);
+
+  const trending = useMemo(() => sortTools(tools, "trending").slice(0, 5), [tools]);
 
   const search = (e) => {
     e.preventDefault();
@@ -60,436 +38,111 @@ const Hero = ({ tools, total }) => {
   };
 
   return (
-    <section className="relative isolate overflow-hidden">
-      <div className="bg-grid absolute inset-0 -z-10" aria-hidden="true" />
-      <div
-        className="absolute left-1/2 top-[-10rem] -z-10 h-[36rem] w-[60rem] -translate-x-1/2 rounded-full bg-gradient-to-tr from-indigo-600/30 via-violet-600/20 to-fuchsia-600/25 blur-3xl"
-        aria-hidden="true"
-      />
-
-      {/* Floating logos (decorative, large screens only) */}
-      <div className="pointer-events-none absolute inset-0 -z-10 hidden xl:block" aria-hidden="true">
-        {floating.map((tool, i) => (
-          <div
-            key={tool.slug || tool._id}
-            className="absolute animate-float opacity-60"
-            style={{
-              top: `${[18, 48, 72, 20, 50, 74][i]}%`,
-              left: i < 3 ? `${[8, 4, 10][i]}%` : undefined,
-              right: i >= 3 ? `${[8, 4, 10][i - 3]}%` : undefined,
-              animationDelay: `${i * 0.9}s`,
-            }}
-          >
-            <ToolLogo tool={tool} size="md" className="shadow-2xl shadow-indigo-500/20 ring-1 ring-white/10" />
-          </div>
-        ))}
-      </div>
-
-      <div className="container-page pb-20 pt-16 text-center sm:pb-28 sm:pt-24">
-        {/* Hero is intentionally not animated: the headline is the LCP element and must paint immediately. */}
-        <div>
-          <Link
-            to="/aitools?sort=newest"
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] py-1 pl-1 pr-3 text-sm text-slate-300 transition-colors hover:border-white/20"
-          >
-            <span className="rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 px-2 py-0.5 text-xs font-semibold text-white">
-              New
-            </span>
-            {total > 0 ? `${total}+ hand-picked AI tools and growing` : "Hand-picked AI tools and growing"}
-            <FiArrowRight aria-hidden="true" />
-          </Link>
-        </div>
-
-        <h1 className="mx-auto mt-8 max-w-4xl text-4xl font-extrabold leading-[1.08] tracking-tight text-white sm:text-6xl lg:text-7xl">
-          Find the perfect <span className="text-gradient">AI tool</span> for any task
-        </h1>
-
-        <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-slate-400">
-          Stop scrolling through endless lists. Compare the best AI tools for writing, images, video, code and research, with honest
-          pricing, in one place.
-        </p>
-
-        <form
-          onSubmit={search}
-          role="search"
-          className="mx-auto mt-10 max-w-2xl"
-        >
-          <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-ink-900/80 p-2 shadow-2xl shadow-indigo-500/10 backdrop-blur focus-within:border-indigo-400/50">
-            <FiSearch className="ml-3 shrink-0 text-xl text-slate-500" aria-hidden="true" />
-            <label htmlFor="hero-search" className="sr-only">
-              Search AI tools
-            </label>
-            <input
-              id="hero-search"
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Try “logo”, “video editing” or “coding”…"
-              className="min-w-0 flex-1 bg-transparent py-2 text-slate-100 placeholder:text-slate-500 focus:outline-none"
-            />
-            <button type="submit" className="btn-primary px-4 sm:px-6">
-              <span className="hidden sm:inline">Search</span>
-              <FiArrowRight className="sm:hidden" aria-label="Search" />
-            </button>
-          </div>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-sm">
-            <span className="text-slate-500">Popular:</span>
-            {POPULAR_SEARCHES.map((term) => (
-              <Link
-                key={term}
-                to={term === "Free" ? "/aitools?price=Free" : `/aitools?q=${encodeURIComponent(term)}`}
-                className="rounded-full border border-white/10 px-3 py-1 text-slate-300 transition-colors hover:border-indigo-400/40 hover:text-white"
-              >
-                {term}
-              </Link>
-            ))}
-          </div>
-        </form>
-      </div>
-    </section>
-  );
-};
-
-const Stats = ({ tools }) => {
-  const stats = useMemo(() => {
-    const categories = new Set(tools.map((t) => t.category)).size;
-    const free = tools.filter((t) => t.price === "Free" || t.price === "Freemium").length;
-    return [
-      { value: tools.length, label: "AI tools listed" },
-      { value: categories, label: "Categories" },
-      { value: free, label: "Free or freemium" },
-      { value: "100%", label: "Free to use, no sign-up" },
-    ];
-  }, [tools]);
-
-  return (
-    <section aria-label="Directory statistics" className="container-page">
-      <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.07] lg:grid-cols-4">
-        {stats.map((s) => (
-          <div key={s.label} className="bg-ink-900 px-6 py-8 text-center">
-            <dt className="text-sm text-slate-400">{s.label}</dt>
-            <dd className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">{tools.length ? s.value : "—"}</dd>
-          </div>
-        ))}
-      </dl>
-    </section>
-  );
-};
-
-const Categories = ({ tools }) => {
-  const counts = useMemo(() => {
-    const map = {};
-    tools.forEach((t) => (map[t.category] = (map[t.category] || 0) + 1));
-    return map;
-  }, [tools]);
-
-  return (
-    <section className="container-page mt-28">
-      <motion.div {...fadeUp}>
-        <SectionHeader
-          eyebrow="Browse by category"
-          title="Whatever you're building, there's an AI for that"
-          action={
-            <Link to="/categories" className="btn-secondary">
-              All categories <FiArrowRight aria-hidden="true" />
-            </Link>
-          }
-        />
-      </motion.div>
-      <div className="mt-10 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
-        {CATEGORIES.slice(0, 8).map((cat, i) => (
-          <motion.div key={cat.name} {...fadeUp} transition={{ ...fadeUp.transition, delay: i * 0.04 }}>
-            <Link
-              to={`/aitools?category=${encodeURIComponent(cat.name)}`}
-              className="group flex h-full flex-col rounded-2xl border border-white/[0.07] bg-ink-850/60 p-5 transition-all hover:-translate-y-0.5 hover:border-white/15 hover:bg-ink-800"
-            >
-              <span className={cn("flex size-11 items-center justify-center rounded-xl bg-gradient-to-br text-xl text-white shadow-lg", cat.color)}>
-                <cat.icon aria-hidden="true" />
-              </span>
-              <span className="mt-4 font-semibold text-white">{cat.name}</span>
-              <span className="mt-1 hidden text-sm text-slate-400 sm:block">{cat.blurb}</span>
-              <span className="mt-3 text-xs font-medium text-slate-500 group-hover:text-indigo-300">
-                {counts[cat.name] || 0} tools →
-              </span>
-            </Link>
-          </motion.div>
-        ))}
-      </div>
-    </section>
-  );
-};
-
-const TABS = [
-  { key: "featured", label: "Featured" },
-  { key: "popular", label: "Most upvoted" },
-  { key: "newest", label: "Just added" },
-];
-
-const Spotlight = ({ tools }) => {
-  const [tab, setTab] = useState("featured");
-  const shown = useMemo(() => {
-    const pool = tab === "featured" && tools.some((t) => t.featured) ? tools.filter((t) => t.featured) : tools;
-    return sortTools(pool, tab).slice(0, 6);
-  }, [tools, tab]);
-
-  return (
-    <section className="container-page mt-28">
-      <motion.div {...fadeUp}>
-        <SectionHeader
-          eyebrow="Spotlight"
-          title="Tools people love right now"
-          subtitle="Our editors' picks plus what the community is upvoting this week."
-          action={
-            <div role="tablist" aria-label="Spotlight lists" className="flex rounded-xl border border-white/10 bg-ink-900 p-1">
-              {TABS.map((t) => (
-                <button
-                  key={t.key}
-                  role="tab"
-                  type="button"
-                  aria-selected={tab === t.key}
-                  onClick={() => setTab(t.key)}
-                  className={cn(
-                    "min-h-10 rounded-lg px-3 text-sm font-medium transition-colors sm:px-4",
-                    tab === t.key ? "bg-white/10 text-white" : "text-slate-400 hover:text-white"
-                  )}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
-          }
-        />
-      </motion.div>
-
-      <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" role="tabpanel">
-        {shown.map((tool) => (
-          <ToolCard key={toolKey(tool)} tool={tool} />
-        ))}
-      </div>
-
-      <div className="mt-10 text-center">
-        <Link to={`/aitools?sort=${tab}`} className="btn-secondary">
-          Explore all tools <FiArrowRight aria-hidden="true" />
-        </Link>
-      </div>
-    </section>
-  );
-};
-
-const STEPS = [
-  { icon: FiCompass, title: "Discover", text: "Search by task or browse curated categories to find tools that fit what you're trying to do." },
-  { icon: FiLayers, title: "Compare", text: "See pricing, features and community upvotes side by side. Save favorites to decide later." },
-  { icon: FiExternalLink, title: "Launch", text: "Jump straight to the tool and start creating. No sign-up or paywall on our side." },
-];
-
-const HowItWorks = () => (
-  <section className="container-page mt-28">
-    <motion.div {...fadeUp} className="text-center">
-      <p className="eyebrow">How it works</p>
-      <h2 className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">From idea to the right tool in minutes</h2>
-    </motion.div>
-    <div className="relative mt-12 grid gap-6 md:grid-cols-3">
-      {STEPS.map((step, i) => (
-        <motion.div key={step.title} {...fadeUp} transition={{ ...fadeUp.transition, delay: i * 0.1 }} className="card p-7">
-          <div className="flex items-center gap-3">
-            <span className="flex size-11 items-center justify-center rounded-xl bg-indigo-500/15 text-xl text-indigo-300">
-              <step.icon aria-hidden="true" />
-            </span>
-            <span className="text-sm font-semibold text-slate-500">Step {i + 1}</span>
-          </div>
-          <h3 className="mt-5 text-xl font-semibold text-white">{step.title}</h3>
-          <p className="mt-2 leading-relaxed text-slate-400">{step.text}</p>
-        </motion.div>
-      ))}
-    </div>
-  </section>
-);
-
-const VALUES = [
-  { icon: FiShield, title: "Hand-reviewed", text: "Every submission is checked by a person before it's listed. No spam, no dead links." },
-  { icon: FiDollarSign, title: "Honest pricing", text: "Clear Free, Freemium and Paid labels, so you know what you're getting before you click." },
-  { icon: FiRefreshCw, title: "Community-driven", text: "Upvotes surface what's actually useful, and anyone can suggest a new tool." },
-  { icon: FiHeart, title: "Built for you", text: "No account needed. Save tools locally and share links to any search or tool." },
-];
-
-const Values = () => (
-  <section className="container-page mt-28">
-    <div className="grid gap-12 lg:grid-cols-5 lg:items-center">
-      <motion.div {...fadeUp} className="lg:col-span-2">
-        <p className="eyebrow">Why AI Tools Hub</p>
-        <h2 className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">A directory you can actually trust</h2>
-        <p className="mt-4 leading-relaxed text-slate-400">
-          The AI landscape changes every week. We do the digging so you can spend your time using great tools, not hunting for
-          them.
-        </p>
-        <Link to="/about" className="btn-secondary mt-8">
-          Our curation process <FiArrowRight aria-hidden="true" />
-        </Link>
-      </motion.div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:col-span-3">
-        {VALUES.map((v, i) => (
-          <motion.div key={v.title} {...fadeUp} transition={{ ...fadeUp.transition, delay: i * 0.08 }} className="card p-6">
-            <v.icon className="text-2xl text-violet-300" aria-hidden="true" />
-            <h3 className="mt-4 font-semibold text-white">{v.title}</h3>
-            <p className="mt-2 text-sm leading-relaxed text-slate-400">{v.text}</p>
-          </motion.div>
-        ))}
-      </div>
-    </div>
-  </section>
-);
-
-const FAQS = [
-  { q: "Is AI Tools Hub free to use?", a: "Yes. Browsing, searching, saving and upvoting are completely free and don't require an account." },
-  {
-    q: "How are tools selected?",
-    a: "We list tools that are live, genuinely useful and clear about pricing. Every community submission is reviewed by a person before it appears in the directory.",
-  },
-  {
-    q: "What do Free, Freemium and Paid mean?",
-    a: "Free tools cost nothing to use. Freemium tools have a free tier with paid upgrades. Paid tools require a subscription or purchase, though many offer trials.",
-  },
-  {
-    q: "Can I list my own AI tool?",
-    a: "Absolutely. Use the Submit a tool page. Listing is free, and every submission is reviewed before it goes live.",
-  },
-  { q: "Where are my saved tools stored?", a: "Saved tools are stored privately in your browser, so we never see your list and no account is needed." },
-];
-
-const FAQ = () => {
-  const [open, setOpen] = useState(0);
-  return (
-    <section className="container-page mt-28 max-w-3xl">
-      <motion.div {...fadeUp} className="text-center">
-        <p className="eyebrow">FAQ</p>
-        <h2 className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">Questions, answered</h2>
-      </motion.div>
-      <div className="mt-10 divide-y divide-white/[0.07] rounded-2xl border border-white/[0.07] bg-ink-850/60">
-        {FAQS.map((item, i) => {
-          const isOpen = open === i;
-          return (
-            <div key={item.q}>
-              <h3>
-                <button
-                  type="button"
-                  onClick={() => setOpen(isOpen ? -1 : i)}
-                  aria-expanded={isOpen}
-                  aria-controls={`faq-${i}`}
-                  className="flex min-h-14 w-full items-center justify-between gap-4 px-6 py-4 text-left font-medium text-white"
-                >
-                  {item.q}
-                  <FiChevronDown className={cn("shrink-0 text-slate-400 transition-transform", isOpen && "rotate-180")} aria-hidden="true" />
-                </button>
-              </h3>
-              <div id={`faq-${i}`} hidden={!isOpen} className="px-6 pb-5 leading-relaxed text-slate-400">
-                {item.a}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </section>
-  );
-};
-
-const CTA = () => (
-  <section className="container-page mt-28">
-    <motion.div
-      {...fadeUp}
-      className="relative isolate overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-indigo-600/30 via-violet-600/20 to-fuchsia-600/20 px-6 py-14 sm:px-12"
-    >
-      <div className="absolute -right-24 -top-24 -z-10 size-72 rounded-full bg-fuchsia-500/30 blur-3xl" aria-hidden="true" />
-      <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">Stay ahead of the AI curve</h2>
-          <p className="mt-3 max-w-lg text-slate-300">
-            Get occasional emails featuring the most useful new AI tools, hand-picked by our team.
+    <section className="border-b border-line">
+      <div className="container-page grid gap-12 py-14 sm:py-20 lg:grid-cols-12 lg:items-center">
+        <div className="lg:col-span-7">
+          <p className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-xs text-fg-subtle">
+            <span>{tools.length} tools</span>
+            <span aria-hidden="true">·</span>
+            <span>{meta.categories} categories</span>
+            {meta.updated && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span>Updated {meta.updated}</span>
+              </>
+            )}
           </p>
-          <div className="mt-6 max-w-lg">
-            <Newsletter />
-          </div>
+          <h1 className="mt-4 text-4xl font-semibold tracking-tight text-fg sm:text-5xl lg:text-[3.5rem] lg:leading-[1.05]">
+            The curated directory of AI&nbsp;tools
+          </h1>
+          <p className="mt-5 max-w-xl text-lg leading-relaxed text-fg-muted">
+            Every listing is reviewed by a person and labeled with honest pricing. Search by what you need to get done, compare
+            side by side, and keep a shortlist. No account needed.
+          </p>
+
+          <form onSubmit={search} role="search" className="mt-8 flex max-w-xl gap-2">
+            <div className="relative flex-1">
+              <FiSearch className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-fg-subtle" aria-hidden="true" />
+              <label htmlFor="hero-search" className="sr-only">
+                Search AI tools
+              </label>
+              <input
+                id="hero-search"
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Try “edit a video” or “write code”"
+                className="input h-11 pl-10"
+              />
+            </div>
+            <button type="submit" className="btn-primary h-11">
+              Search
+            </button>
+          </form>
+
+          <p className="mt-4 flex flex-wrap items-center gap-x-1 gap-y-1 text-sm text-fg-subtle">
+            <span className="mr-1">Popular:</span>
+            {QUICK_LINKS.map((name, i) => {
+              const cat = CATEGORIES.find((c) => c.name === name);
+              return (
+                <span key={name}>
+                  <Link to={`/aitools?category=${encodeURIComponent(name)}`} className="text-fg-muted underline-offset-4 hover:text-fg hover:underline">
+                    {cat?.short || name}
+                  </Link>
+                  {i < QUICK_LINKS.length - 1 && <span aria-hidden="true">,</span>}
+                </span>
+              );
+            })}
+          </p>
         </div>
-        <div className="card flex flex-col items-start gap-4 border-white/10 bg-ink-950/50 p-7">
-          <span className="flex size-11 items-center justify-center rounded-xl bg-white/10 text-xl text-white">
-            <FiPlus aria-hidden="true" />
-          </span>
-          <h3 className="text-xl font-semibold text-white">Built an AI tool?</h3>
-          <p className="text-slate-400">Put it in front of people actively looking for AI tools. Listing is free and takes two minutes.</p>
-          <Link to="/submit" className="btn-primary">
-            Submit your tool <FiArrowRight aria-hidden="true" />
-          </Link>
+
+        <div className="lg:col-span-5">
+          <div className="card shadow-card">
+            <div className="flex items-center justify-between border-b border-line px-4 py-3">
+              <h2 className="text-sm font-medium text-fg">Trending</h2>
+              <Link to="/aitools?sort=trending" className="text-xs text-fg-muted hover:text-fg">
+                View all
+              </Link>
+            </div>
+            <ol className="divide-y divide-line">
+              {trending.map((tool, i) => (
+                <li key={toolKey(tool)} className="relative flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-2">
+                  <span className="w-4 font-mono text-xs tabular-nums text-fg-subtle">{i + 1}</span>
+                  <ToolLogo tool={tool} size="xs" />
+                  <div className="min-w-0 flex-1">
+                    <Link to={toolPath(tool)} className="block truncate text-sm font-medium text-fg after:absolute after:inset-0">
+                      {tool.name}
+                    </Link>
+                    <p className="truncate text-xs text-fg-subtle">{tool.category}</p>
+                  </div>
+                  <PriceTag price={tool.price} className="hidden sm:inline-flex" />
+                </li>
+              ))}
+            </ol>
+          </div>
         </div>
       </div>
-    </motion.div>
-  </section>
-);
-
-// Same pick for everyone all day (UTC), rotating daily: a small reason to come back.
-const ToolOfTheDay = ({ tools }) => {
-  const tool = useMemo(() => {
-    if (!tools.length) return null;
-    const sorted = [...tools].sort((a, b) => toolKey(a).localeCompare(toolKey(b)));
-    const day = Math.floor(Date.now() / 86_400_000);
-    return sorted[(day * 7919) % sorted.length]; // prime stride so neighbours aren't picked on consecutive days
-  }, [tools]);
-  if (!tool) return null;
-
-  return (
-    <section className="container-page mt-16" aria-labelledby="totd">
-      <motion.div
-        {...fadeUp}
-        className="relative isolate overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-ink-800 to-ink-900 p-6 sm:p-10"
-      >
-        <div className="absolute -right-20 -top-20 -z-10 size-72 rounded-full bg-indigo-600/20 blur-3xl" aria-hidden="true" />
-        <div className="flex flex-col gap-8 md:flex-row md:items-center">
-          <ToolLogo tool={tool} size="lg" className="ring-1 ring-white/10" />
-          <div className="min-w-0 flex-1">
-            <p id="totd" className="eyebrow flex items-center gap-2">
-              <FiSun aria-hidden="true" /> Tool of the day
-            </p>
-            <h2 className="mt-2 text-2xl font-bold tracking-tight text-white sm:text-3xl">{tool.name}</h2>
-            {tool.tagline && <p className="mt-1 text-lg text-slate-300">{tool.tagline}</p>}
-            <p className="mt-3 line-clamp-2 max-w-2xl text-slate-400">{tool.description}</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <span className={cn("badge", PRICING_STYLES[tool.price])}>{tool.price}</span>
-              <span className="badge bg-white/5 text-slate-300 ring-white/10">{tool.category}</span>
-            </div>
-          </div>
-          <div className="flex shrink-0 flex-wrap gap-3">
-            <Link to={toolPath(tool)} className="btn-secondary">
-              Learn more
-            </Link>
-            <VisitLink tool={tool} className="btn-primary">
-              Try it
-            </VisitLink>
-          </div>
-        </div>
-      </motion.div>
     </section>
   );
 };
 
 const RecentlyViewed = ({ tools }) => {
-  const recentKeys = useRecent();
-  const recent = resolveKeys(recentKeys, tools).slice(0, 4);
+  const recent = resolveKeys(useRecent(), tools).slice(0, 6);
   if (recent.length === 0) return null;
   return (
-    <section className="container-page mt-16" aria-labelledby="recent">
-      <h2 id="recent" className="flex items-center gap-2 text-sm font-semibold uppercase tracking-widest text-slate-400">
-        <FiClock aria-hidden="true" /> Continue exploring
+    <section className="container-page mt-10" aria-labelledby="recent">
+      <h2 id="recent" className="text-sm font-medium text-fg-muted">
+        Recently viewed
       </h2>
-      <ul className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <ul className="no-scrollbar mt-3 flex gap-2 overflow-x-auto">
         {recent.map((tool) => (
-          <li key={toolKey(tool)}>
+          <li key={toolKey(tool)} className="shrink-0">
             <Link
               to={toolPath(tool)}
-              className="flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-ink-850/60 p-3 transition-colors hover:border-white/15 hover:bg-ink-800"
+              className="flex items-center gap-2 rounded-lg border border-line bg-surface py-1.5 pl-1.5 pr-3 text-sm text-fg transition-colors hover:border-line-strong"
             >
-              <ToolLogo tool={tool} size="sm" />
-              <span className="min-w-0">
-                <span className="block truncate text-sm font-semibold text-white">{tool.name}</span>
-                <span className="block truncate text-xs text-slate-500">{tool.category}</span>
-              </span>
+              <ToolLogo tool={tool} size="xs" />
+              {tool.name}
             </Link>
           </li>
         ))}
@@ -498,47 +151,238 @@ const RecentlyViewed = ({ tools }) => {
   );
 };
 
-const Stacks = ({ tools }) => (
-  <section className="container-page mt-28">
-    <motion.div {...fadeUp}>
-      <SectionHeader
-        eyebrow="Curated stacks"
-        title="Start with a proven toolkit"
-        subtitle="Hand-picked combinations for creators, developers, students, marketers and founders."
-        action={
-          <Link to="/stacks" className="btn-secondary">
-            All stacks <FiArrowRight aria-hidden="true" />
+const TABS = [
+  { key: "featured", label: "Featured" },
+  { key: "popular", label: "Most upvoted" },
+  { key: "newest", label: "Newest" },
+];
+
+const TopTools = ({ tools }) => {
+  const [tab, setTab] = useState("featured");
+  const shown = useMemo(() => sortTools(tools, tab).slice(0, 10), [tools, tab]);
+
+  return (
+    <section aria-labelledby="top-tools">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <h2 id="top-tools" className="section-title">
+            Top tools
+          </h2>
+          <SyncStatus />
+        </div>
+        <div role="tablist" aria-label="Sort top tools" className="flex w-full rounded-lg border border-line bg-surface-2 p-0.5 sm:w-auto">
+          {TABS.map((t) => (
+            <button
+              key={t.key}
+              role="tab"
+              type="button"
+              aria-selected={tab === t.key}
+              onClick={() => setTab(t.key)}
+              className={cn(
+                "h-8 flex-1 whitespace-nowrap rounded-md px-3 text-sm transition-colors sm:flex-none",
+                tab === t.key ? "bg-surface font-medium text-fg shadow-[0_1px_2px_rgb(0_0_0/0.06)]" : "text-fg-muted hover:text-fg"
+              )}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <ol role="tabpanel" className="mt-4 -mx-2 divide-y divide-line sm:-mx-3">
+        {shown.map((tool, i) => (
+          <li key={toolKey(tool)}>
+            <ToolRow tool={tool} rank={i + 1} />
+          </li>
+        ))}
+      </ol>
+
+      <Link to={`/aitools?sort=${tab}`} className="btn-secondary mt-4 w-full">
+        Browse all {tools.length} tools <FiArrowRight aria-hidden="true" />
+      </Link>
+    </section>
+  );
+};
+
+// Same pick for everyone all day (UTC), rotating daily.
+const ToolOfTheDay = ({ tools }) => {
+  const tool = useMemo(() => {
+    if (!tools.length) return null;
+    const sorted = [...tools].sort((a, b) => toolKey(a).localeCompare(toolKey(b)));
+    const day = Math.floor(Date.now() / 86_400_000);
+    return sorted[(day * 7919) % sorted.length];
+  }, [tools]);
+  if (!tool) return null;
+
+  return (
+    <section className="card p-5" aria-labelledby="totd">
+      <h2 id="totd" className="text-xs font-medium text-fg-subtle">
+        Tool of the day
+      </h2>
+      <div className="mt-3 flex items-center gap-3">
+        <ToolLogo tool={tool} />
+        <div className="min-w-0">
+          <Link to={toolPath(tool)} className="font-semibold text-fg hover:underline">
+            {tool.name}
           </Link>
-        }
-      />
-    </motion.div>
-    <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {collections.slice(0, 3).map((c, i) => (
-        <motion.div key={c.slug} {...fadeUp} transition={{ ...fadeUp.transition, delay: i * 0.06 }}>
-          <CollectionCard collection={c} tools={tools} />
-        </motion.div>
+          <p className="truncate text-sm text-fg-subtle">{tool.category}</p>
+        </div>
+      </div>
+      <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-fg-muted">{tool.description}</p>
+      <div className="mt-4 flex gap-2">
+        <Link to={toolPath(tool)} className="btn-secondary min-h-9 flex-1">
+          Details
+        </Link>
+        <VisitLink tool={tool} className="btn-primary min-h-9 flex-1">
+          Visit
+        </VisitLink>
+      </div>
+    </section>
+  );
+};
+
+const Sidebar = ({ tools }) => (
+  <aside className="space-y-6">
+    <ToolOfTheDay tools={tools} />
+
+    <section className="card p-3" aria-labelledby="stacks-side">
+      <div className="flex items-center justify-between px-2 pb-1 pt-1">
+        <h2 id="stacks-side" className="text-xs font-medium text-fg-subtle">
+          Curated stacks
+        </h2>
+        <Link to="/stacks" className="text-xs text-fg-muted hover:text-fg">
+          All
+        </Link>
+      </div>
+      {collections.slice(0, 5).map((c) => (
+        <CollectionCard key={c.slug} collection={c} tools={tools} compact />
       ))}
+    </section>
+
+    <section className="rounded-xl border border-dashed border-line-strong p-5">
+      <h2 className="font-medium text-fg">Built an AI tool?</h2>
+      <p className="mt-1 text-sm text-fg-muted">Listing is free. Every submission is reviewed before it goes live.</p>
+      <Link to="/submit" className="btn-secondary mt-4 min-h-9">
+        <FiPlus aria-hidden="true" /> Submit a tool
+      </Link>
+    </section>
+  </aside>
+);
+
+const CategoryGrid = ({ tools }) => {
+  const counts = useMemo(() => {
+    const map = {};
+    tools.forEach((t) => (map[t.category] = (map[t.category] || 0) + 1));
+    return map;
+  }, [tools]);
+
+  return (
+    <section className="container-page mt-20" aria-labelledby="categories">
+      <div className="flex items-end justify-between gap-4">
+        <h2 id="categories" className="section-title">
+          Browse by category
+        </h2>
+        <Link to="/categories" className="text-sm text-fg-muted hover:text-fg">
+          All categories
+        </Link>
+      </div>
+      {/* gap-px over a line-coloured background draws crisp 1px grid lines */}
+      <ul className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-3 lg:grid-cols-4">
+        {CATEGORIES.map((cat) => (
+          <li key={cat.name} className="bg-surface">
+            <Link
+              to={`/aitools?category=${encodeURIComponent(cat.name)}`}
+              className="group flex h-full items-start gap-3 p-4 transition-colors hover:bg-surface-2"
+            >
+              <cat.icon className="mt-0.5 shrink-0 text-fg-subtle group-hover:text-fg" aria-hidden="true" />
+              <span className="min-w-0">
+                <span className="block text-sm font-medium text-fg">{cat.short}</span>
+                <span className="mt-0.5 block text-xs text-fg-subtle">
+                  {counts[cat.name] || 0} tools · <span className="hidden sm:inline">{cat.blurb}</span>
+                </span>
+              </span>
+            </Link>
+          </li>
+        ))}
+        <li className="bg-surface">
+          <Link to="/aitools" className="flex h-full items-center gap-2 p-4 text-sm font-medium text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg">
+            All {tools.length} tools <FiArrowRight aria-hidden="true" />
+          </Link>
+        </li>
+      </ul>
+    </section>
+  );
+};
+
+const FAQS = [
+  { q: "Is AI Tools Hub free?", a: "Yes. Browsing, searching, saving, comparing and upvoting are free and don't need an account." },
+  {
+    q: "How are tools chosen?",
+    a: "Tools must be live, genuinely useful and clear about pricing. Every community submission is reviewed by a person before it's listed.",
+  },
+  {
+    q: "What do Free, Freemium and Paid mean?",
+    a: "Free costs nothing. Freemium has a free tier with paid upgrades. Paid requires a subscription or purchase, though many offer trials.",
+  },
+  { q: "Can I list my own tool?", a: "Yes. Use Submit a tool. Listing is free, and each submission is reviewed before it goes live." },
+  { q: "Where are my saved tools stored?", a: "In your browser only. We never see your list, and no account is needed." },
+];
+
+const FAQ = () => (
+  <section className="container-page mt-20" aria-labelledby="faq">
+    <div className="grid gap-8 lg:grid-cols-12">
+      <div className="lg:col-span-4">
+        <h2 id="faq" className="section-title">
+          Frequently asked questions
+        </h2>
+        <p className="mt-2 text-sm text-fg-muted">
+          Something else?{" "}
+          <Link to="/contact" className="link">
+            Get in touch
+          </Link>
+          .
+        </p>
+      </div>
+      <div className="divide-y divide-line border-y border-line lg:col-span-8">
+        {FAQS.map((item) => (
+          <details key={item.q} className="group py-4 [&_summary::-webkit-details-marker]:hidden">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium text-fg">
+              {item.q}
+              <FiPlus className="shrink-0 text-fg-subtle transition-transform group-open:rotate-45" aria-hidden="true" />
+            </summary>
+            <p className="mt-2 pr-8 text-sm leading-relaxed text-fg-muted">{item.a}</p>
+          </details>
+        ))}
+      </div>
     </div>
   </section>
 );
 
 const Home = () => {
   const { tools } = useTools();
+  const totalUpvotes = useMemo(() => tools.reduce((s, t) => s + (t.upvotes || 0), 0), [tools]);
 
   return (
     <>
-      <Seo description="Discover and compare the best AI tools for writing, images, video, coding, research and productivity. Hand-curated, with honest pricing." path="/" />
-      <Hero tools={tools} total={tools.length} />
-      <Stats tools={tools} />
+      <Seo
+        description="Hand-reviewed AI tools for writing, images, video, coding and research, with clear pricing. Search by task, compare side by side, and save a shortlist."
+        path="/"
+      />
+      <Hero tools={tools} />
       <RecentlyViewed tools={tools} />
-      <ToolOfTheDay tools={tools} />
-      <Categories tools={tools} />
-      <Spotlight tools={tools} />
-      <Stacks tools={tools} />
-      <HowItWorks />
-      <Values />
+      <div className="container-page mt-12 grid gap-10 lg:grid-cols-12">
+        <div className="lg:col-span-8">
+          <TopTools tools={tools} />
+          {totalUpvotes > 0 && (
+            <p className="mt-3 text-center font-mono text-xs text-fg-subtle">{formatCount(totalUpvotes)} community upvotes so far</p>
+          )}
+        </div>
+        <div className="lg:col-span-4">
+          <Sidebar tools={tools} />
+        </div>
+      </div>
+      <CategoryGrid tools={tools} />
       <FAQ />
-      <CTA />
     </>
   );
 };

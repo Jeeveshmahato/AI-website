@@ -1,20 +1,15 @@
 import { useEffect, useMemo, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { FiColumns, FiPlus, FiShare2, FiX, FiChevronUp } from "react-icons/fi";
+import { FiColumns, FiPlus, FiShare2, FiX } from "react-icons/fi";
 import Seo from "../Components/Seo";
 import ToolLogo from "../Components/ToolLogo";
+import PriceTag from "../Components/PriceTag";
 import { VisitLink } from "../Components/ToolCard";
 import { useToast } from "../Components/Toast";
 import { useTools } from "../lib/toolsStore";
 import { useCompare, resolveKeys, MAX_COMPARE } from "../lib/personal";
-import { PRICING_STYLES } from "../lib/constants";
-import { cn, formatCount, getDomain, toolKey, toolPath } from "../lib/utils";
-
-const PRICING_NOTES = {
-  Free: "Free to use",
-  Freemium: "Free plan + paid upgrades",
-  Paid: "Paid plans (trials may exist)",
-};
+import { PRICING_NOTES } from "../lib/constants";
+import { formatCount, getDomain, toolKey, toolPath } from "../lib/utils";
 
 const ROWS = [
   { label: "Category", render: (t) => t.category },
@@ -22,36 +17,29 @@ const ROWS = [
     label: "Pricing",
     render: (t) => (
       <div>
-        <span className={cn("badge", PRICING_STYLES[t.price])}>{t.price}</span>
-        <p className="mt-1.5 text-xs text-slate-500">{PRICING_NOTES[t.price]}</p>
+        <PriceTag price={t.price} className="text-sm text-fg" />
+        <p className="mt-1 text-xs leading-relaxed text-fg-subtle">{PRICING_NOTES[t.price]}</p>
       </div>
     ),
   },
+  { label: "Upvotes", render: (t) => <span className="font-mono tabular-nums">{formatCount(t.upvotes)}</span> },
   {
-    label: "Community",
-    render: (t) => (
-      <span className="inline-flex items-center gap-1">
-        <FiChevronUp aria-hidden="true" /> {formatCount(t.upvotes)} upvotes
-      </span>
-    ),
-  },
-  {
-    label: "Best for",
+    label: "Good for",
     render: (t) =>
       t.tags?.length ? (
         <ul className="flex flex-wrap gap-1.5">
           {t.tags.map((tag) => (
-            <li key={tag} className="rounded-full border border-white/10 px-2 py-0.5 text-xs text-slate-300">
+            <li key={tag} className="rounded-md border border-line px-2 py-0.5 text-xs text-fg-muted">
               {tag}
             </li>
           ))}
         </ul>
       ) : (
-        <span className="text-slate-500">—</span>
+        <span className="text-fg-subtle">—</span>
       ),
   },
-  { label: "Overview", render: (t) => <p className="text-sm leading-relaxed text-slate-300">{t.description}</p> },
-  { label: "Website", render: (t) => <span className="text-slate-300">{getDomain(t.link)}</span> },
+  { label: "Overview", render: (t) => <p className="text-sm leading-relaxed text-fg-muted">{t.description}</p> },
+  { label: "Website", render: (t) => <span className="text-fg-muted">{getDomain(t.link)}</span> },
 ];
 
 const AddToolSlot = ({ tools, exclude, onAdd }) => {
@@ -60,8 +48,8 @@ const AddToolSlot = ({ tools, exclude, onAdd }) => {
     [tools, exclude]
   );
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-white/15 p-6 text-center">
-      <span className="flex size-12 items-center justify-center rounded-xl bg-white/5 text-xl text-slate-400">
+    <div className="flex h-full flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-line-strong p-5 text-center">
+      <span className="flex size-9 items-center justify-center rounded-lg border border-line bg-surface-2 text-fg-muted">
         <FiPlus aria-hidden="true" />
       </span>
       <label className="w-full">
@@ -122,13 +110,13 @@ const Compare = () => {
   const title = selected.length ? selected.map((t) => t.name).join(" vs ") : "Compare AI tools";
 
   return (
-    <div className="container-page pt-10 sm:pt-14">
+    <div className="container-page pt-10">
       <Seo title={title} description={`Side-by-side comparison of pricing, features and community ratings: ${title}.`} />
 
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <header className="flex flex-col gap-4 border-b border-line pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-3xl">
-          <h1 className="text-3xl font-bold tracking-tight text-white sm:text-5xl">Compare tools</h1>
-          <p className="mt-3 text-slate-400">Put up to {MAX_COMPARE} tools side by side to find the right fit.</p>
+          <h1 className="text-3xl font-semibold tracking-tight text-fg">Compare</h1>
+          <p className="mt-1 text-fg-muted">Put up to {MAX_COMPARE} tools side by side.</p>
         </div>
         {selected.length > 1 && (
           <button type="button" onClick={share} className="btn-secondary self-start sm:self-auto">
@@ -138,10 +126,10 @@ const Compare = () => {
       </header>
 
       {selected.length === 0 ? (
-        <div className="card mt-10 flex flex-col items-center px-6 py-16 text-center">
-          <FiColumns className="text-4xl text-slate-600" aria-hidden="true" />
-          <h2 className="mt-4 text-xl font-semibold text-white">Nothing to compare yet</h2>
-          <p className="mt-2 max-w-md text-slate-400">
+        <div className="mt-8 flex flex-col items-center rounded-xl border border-dashed border-line-strong px-6 py-14 text-center">
+          <FiColumns className="text-2xl text-fg-subtle" aria-hidden="true" />
+          <h2 className="mt-3 font-semibold text-fg">Nothing to compare yet</h2>
+          <p className="mt-1 max-w-md text-sm text-fg-muted">
             Tap the compare icon on any tool card, or pick tools below to start.
           </p>
           <div className="mt-6 w-full max-w-xs">
@@ -149,7 +137,7 @@ const Compare = () => {
           </div>
         </div>
       ) : (
-        <div className="-mx-4 mt-10 overflow-x-auto px-4 pb-4">
+        <div className="-mx-4 mt-8 overflow-x-auto px-4 pb-4">
           <table className="w-full min-w-[720px] table-fixed border-separate border-spacing-x-3 border-spacing-y-0">
             <caption className="sr-only">Comparison of {title}</caption>
             <colgroup>
@@ -164,23 +152,23 @@ const Compare = () => {
                 {selected.map((tool) => (
                   // h-px lets the card's h-full resolve inside a table cell, so all cards match in height.
                   <th key={toolKey(tool)} scope="col" className="h-px align-top font-normal">
-                    <div className="card relative flex h-full flex-col items-start gap-3 p-5 text-left">
+                    <div className="card relative flex h-full flex-col items-start gap-3 p-4 text-left">
                       <button
                         type="button"
                         onClick={() => remove(tool)}
-                        className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-lg text-slate-500 hover:bg-white/5 hover:text-white"
+                        className="absolute right-2.5 top-2.5 flex size-7 items-center justify-center rounded-md text-fg-subtle hover:bg-surface-2 hover:text-fg"
                         aria-label={`Remove ${tool.name}`}
                       >
                         <FiX aria-hidden="true" />
                       </button>
                       <ToolLogo tool={tool} />
                       <div>
-                        <Link to={toolPath(tool)} className="text-lg font-semibold text-white hover:underline">
+                        <Link to={toolPath(tool)} className="font-semibold text-fg hover:underline">
                           {tool.name}
                         </Link>
-                        {tool.tagline && <p className="mt-1 text-sm text-slate-400">{tool.tagline}</p>}
+                        {tool.tagline && <p className="mt-1 text-sm text-fg-muted">{tool.tagline}</p>}
                       </div>
-                      <VisitLink tool={tool} className="btn-primary mt-auto min-h-10 w-full whitespace-nowrap">
+                      <VisitLink tool={tool} className="btn-primary mt-auto min-h-9 w-full">
                         Visit
                       </VisitLink>
                     </div>
@@ -196,16 +184,16 @@ const Compare = () => {
             <tbody>
               {ROWS.map((row) => (
                 <tr key={row.label}>
-                  <th scope="row" className="sticky left-0 z-10 bg-ink-950 py-5 pr-2 text-left align-top text-sm font-medium text-slate-400">
+                  <th scope="row" className="sticky left-0 z-10 border-b border-line bg-canvas py-4 pr-2 text-left align-top text-sm font-normal text-fg-subtle">
                     {row.label}
                   </th>
                   {selected.map((tool) => (
-                    <td key={toolKey(tool)} className="border-b border-white/[0.06] px-2 py-5 align-top text-sm text-slate-200">
+                    <td key={toolKey(tool)} className="border-b border-line px-1 py-4 align-top text-sm text-fg">
                       {row.render(tool)}
                     </td>
                   ))}
                   {Array.from({ length: emptySlots }, (_, i) => (
-                    <td key={`empty-${i}`} className="border-b border-white/[0.06]" />
+                    <td key={`empty-${i}`} className="border-b border-line" />
                   ))}
                 </tr>
               ))}

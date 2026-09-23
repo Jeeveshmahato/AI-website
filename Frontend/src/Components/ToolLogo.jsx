@@ -1,14 +1,18 @@
 import { useState } from "react";
 import { faviconUrl, safeUrl, cn } from "../lib/utils";
-import { getCategory } from "../lib/constants";
 
 const SIZES = {
-  sm: "size-10 rounded-xl text-base",
-  md: "size-12 rounded-xl text-lg",
-  lg: "size-20 rounded-2xl text-3xl",
+  xs: "size-7 rounded-md text-xs",
+  sm: "size-9 rounded-lg text-sm",
+  md: "size-11 rounded-lg text-base",
+  lg: "size-16 rounded-xl text-2xl",
 };
 
-// Tries the submitted logo, then the site's favicon, then a lettered gradient tile.
+// Fixed padding per size (percentage padding would resolve against the parent's width).
+const PADDING = { xs: "p-1", sm: "p-1.5", md: "p-2", lg: "p-2.5" };
+
+// Tries the submitted logo, then the site's favicon, then a neutral monogram.
+// Logos sit on white in both themes, since most brand marks are designed for light backgrounds.
 const ToolLogo = ({ tool, size = "md", className }) => {
   const sources = [tool.image && safeUrl(tool.image) !== "#" ? tool.image : null, faviconUrl(tool.link)].filter(Boolean);
   const [index, setIndex] = useState(0);
@@ -19,8 +23,7 @@ const ToolLogo = ({ tool, size = "md", className }) => {
       <div
         aria-hidden="true"
         className={cn(
-          "flex shrink-0 items-center justify-center bg-gradient-to-br font-bold text-white",
-          getCategory(tool.category).color,
+          "flex shrink-0 items-center justify-center border border-line bg-surface-2 font-semibold text-fg-muted",
           SIZES[size],
           className
         )}
@@ -31,7 +34,7 @@ const ToolLogo = ({ tool, size = "md", className }) => {
   }
 
   return (
-    <div className={cn("flex shrink-0 items-center justify-center overflow-hidden bg-white p-1.5 shadow-inner", SIZES[size], className)}>
+    <div className={cn("flex shrink-0 items-center justify-center overflow-hidden border border-line bg-white", SIZES[size], PADDING[size], className)}>
       <img
         src={src}
         alt=""

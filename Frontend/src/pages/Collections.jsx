@@ -1,26 +1,24 @@
 import { Link, useParams } from "react-router-dom";
 import { FiArrowLeft, FiColumns } from "react-icons/fi";
 import Seo from "../Components/Seo";
-import ToolCard from "../Components/ToolCard";
+import { ToolRow } from "../Components/ToolCard";
 import CollectionCard from "../Components/CollectionCard";
 import NotFound from "./NotFound";
 import collections, { getCollection } from "../data/collections";
 import { useTools } from "../lib/toolsStore";
 import { resolveKeys, MAX_COMPARE } from "../lib/personal";
-import { cn, toolKey } from "../lib/utils";
+import { toolKey } from "../lib/utils";
 
 export const CollectionsIndex = () => {
   const { tools } = useTools();
   return (
-    <div className="container-page pt-10 sm:pt-14">
+    <div className="container-page pt-10">
       <Seo title="Curated AI tool stacks" description="Hand-picked AI toolkits for creators, developers, students, marketers and founders." />
-      <header className="max-w-3xl">
-        <h1 className="text-3xl font-bold tracking-tight text-white sm:text-5xl">Curated stacks</h1>
-        <p className="mt-3 text-slate-400">
-          Not sure where to start? These hand-picked toolkits cover the essentials for common roles.
-        </p>
+      <header className="border-b border-line pb-6">
+        <h1 className="text-3xl font-semibold tracking-tight text-fg">Stacks</h1>
+        <p className="mt-1 max-w-2xl text-fg-muted">Hand-picked toolkits for common roles. A good place to start if you're new to AI tools.</p>
       </header>
-      <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {collections.map((c) => (
           <CollectionCard key={c.slug} collection={c} tools={tools} />
         ))}
@@ -39,43 +37,40 @@ export const CollectionDetail = () => {
   const others = collections.filter((c) => c.slug !== slug).slice(0, 3);
 
   return (
-    <div className="container-page pt-8 sm:pt-12">
+    <div className="container-page pt-8">
       <Seo title={collection.title} description={collection.description} />
-      <Link to="/stacks" className="inline-flex items-center gap-1 text-sm text-slate-400 hover:text-white">
-        <FiArrowLeft aria-hidden="true" /> All stacks
+      <Link to="/stacks" className="inline-flex items-center gap-1.5 text-sm text-fg-subtle hover:text-fg">
+        <FiArrowLeft aria-hidden="true" /> Stacks
       </Link>
 
-      <header className="mt-6 flex flex-col gap-6 sm:flex-row sm:items-start">
-        <span className={cn("flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br text-3xl text-white shadow-lg", collection.color)}>
-          <collection.icon aria-hidden="true" />
-        </span>
-        <div className="max-w-3xl flex-1">
-          <h1 className="text-3xl font-bold tracking-tight text-white sm:text-5xl">{collection.title}</h1>
-          <p className="mt-3 text-lg leading-relaxed text-slate-400">{collection.description}</p>
+      <header className="mt-6 flex flex-col gap-5 border-b border-line pb-8 sm:flex-row sm:items-end sm:justify-between">
+        <div className="max-w-2xl">
+          <span className="flex size-10 items-center justify-center rounded-lg border border-line bg-surface-2 text-lg text-fg-muted">
+            <collection.icon aria-hidden="true" />
+          </span>
+          <h1 className="mt-4 text-3xl font-semibold tracking-tight text-fg">{collection.title}</h1>
+          <p className="mt-2 leading-relaxed text-fg-muted">{collection.description}</p>
         </div>
         {items.length > 1 && (
-          <Link
-            to={`/compare?tools=${items.slice(0, MAX_COMPARE).map(toolKey).join(",")}`}
-            className="btn-secondary shrink-0 self-start"
-          >
+          <Link to={`/compare?tools=${items.slice(0, MAX_COMPARE).map(toolKey).join(",")}`} className="btn-secondary shrink-0">
             <FiColumns aria-hidden="true" /> Compare top {Math.min(MAX_COMPARE, items.length)}
           </Link>
         )}
       </header>
 
-      <ol className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {items.map((tool) => (
+      <ol className="mt-4 -mx-2 max-w-3xl divide-y divide-line sm:-mx-3">
+        {items.map((tool, i) => (
           <li key={toolKey(tool)}>
-            <ToolCard tool={tool} />
+            <ToolRow tool={tool} rank={i + 1} />
           </li>
         ))}
       </ol>
 
-      <section className="mt-24" aria-labelledby="more-stacks">
-        <h2 id="more-stacks" className="text-2xl font-bold tracking-tight text-white">
+      <section className="mt-16 border-t border-line pt-8" aria-labelledby="more-stacks">
+        <h2 id="more-stacks" className="section-title">
           More stacks
         </h2>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {others.map((c) => (
             <CollectionCard key={c.slug} collection={c} tools={tools} />
           ))}

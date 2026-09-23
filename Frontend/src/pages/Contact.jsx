@@ -68,7 +68,7 @@ const Contact = () => {
         {...props}
       />
       {errors[name] && (
-        <p id={`${id}-${name}-err`} className="mt-1.5 text-sm text-rose-300">
+        <p id={`${id}-${name}-err`} className="mt-1.5 text-sm text-danger">
           {errors[name]}
         </p>
       )}
@@ -76,24 +76,22 @@ const Contact = () => {
   );
 
   return (
-    <div className="container-page pt-10 sm:pt-14">
+    <div className="container-page pt-10">
       <Seo title="Contact us" description="Get in touch with the AI Tools Hub team about listings, corrections or partnerships." />
       <div className="grid gap-12 lg:grid-cols-5">
         <div className="lg:col-span-2">
-          <h1 className="text-3xl font-bold tracking-tight text-white sm:text-5xl">Get in touch</h1>
-          <p className="mt-4 leading-relaxed text-slate-400">
-            Questions, feedback or corrections? We read every message and usually reply within a couple of business days.
-          </p>
-          <ul className="mt-10 space-y-4">
+          <h1 className="text-3xl font-semibold tracking-tight text-fg">Contact</h1>
+          <p className="mt-2 leading-relaxed text-fg-muted">Questions, feedback or corrections? We read every message.</p>
+          <ul className="mt-8 divide-y divide-line border-y border-line">
             {TOPICS.map((t) => (
-              <li key={t.title} className="card flex gap-4 p-5">
-                <t.icon className="mt-0.5 shrink-0 text-xl text-indigo-300" aria-hidden="true" />
+              <li key={t.title} className="flex gap-3 py-4">
+                <t.icon className="mt-0.5 shrink-0 text-fg-subtle" aria-hidden="true" />
                 <div>
-                  <h2 className="font-semibold text-white">{t.title}</h2>
-                  <p className="mt-1 text-sm text-slate-400">{t.text}</p>
+                  <h2 className="text-sm font-medium text-fg">{t.title}</h2>
+                  <p className="mt-0.5 text-sm text-fg-muted">{t.text}</p>
                   {t.to && (
-                    <Link to={t.to} className="mt-2 inline-block text-sm font-medium text-indigo-300 hover:text-indigo-200">
-                      {t.cta} →
+                    <Link to={t.to} className="link mt-1 inline-block text-sm">
+                      {t.cta}
                     </Link>
                   )}
                 </div>
@@ -104,13 +102,13 @@ const Contact = () => {
 
         <div className="lg:col-span-3">
           {status === "done" ? (
-            <div className="card flex flex-col items-center px-6 py-16 text-center" role="status">
-              <FiCheckCircle className="text-5xl text-emerald-300" aria-hidden="true" />
-              <h2 className="mt-5 text-2xl font-bold text-white">Message sent</h2>
-              <p className="mt-2 text-slate-400">Thanks, {values.name.split(" ")[0]}! We'll reply to {values.email} soon.</p>
+            <div className="card flex flex-col items-start p-8" role="status">
+              <FiCheckCircle className="text-2xl text-success" aria-hidden="true" />
+              <h2 className="mt-4 text-xl font-semibold text-fg">Message sent</h2>
+              <p className="mt-1 text-fg-muted">Thanks, {values.name.split(" ")[0]}. We'll reply to {values.email}.</p>
               <button
                 type="button"
-                className="btn-secondary mt-8"
+                className="btn-secondary mt-6"
                 onClick={() => {
                   setValues(EMPTY);
                   setStatus("idle");
@@ -120,9 +118,9 @@ const Contact = () => {
               </button>
             </div>
           ) : (
-            <form onSubmit={onSubmit} noValidate className="card space-y-5 p-6 sm:p-8">
+            <form onSubmit={onSubmit} noValidate className="card space-y-5 p-5 sm:p-6">
               {formError && (
-                <div role="alert" className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-200">
+                <div role="alert" className="rounded-lg border border-danger/40 bg-danger/10 p-3 text-sm text-danger">
                   {formError}
                 </div>
               )}
@@ -142,7 +140,7 @@ const Contact = () => {
               </div>
               <div>
                 <label htmlFor={`${id}-subject`} className="label">
-                  Subject <span className="font-normal text-slate-500">(optional)</span>
+                  Subject <span className="font-normal text-fg-subtle">(optional)</span>
                 </label>
                 {field("subject", { maxLength: 150 })}
               </div>
@@ -161,7 +159,7 @@ const Contact = () => {
                   className={cn("input resize-y", errors.message && "input-error")}
                 />
                 {errors.message && (
-                  <p id={`${id}-message-err`} className="mt-1.5 text-sm text-rose-300">
+                  <p id={`${id}-message-err`} className="mt-1.5 text-sm text-danger">
                     {errors.message}
                   </p>
                 )}
@@ -170,7 +168,7 @@ const Contact = () => {
                 <label htmlFor={`${id}-website`}>Leave this empty</label>
                 <input id={`${id}-website`} tabIndex={-1} autoComplete="off" value={values.website} onChange={set("website")} />
               </div>
-              <button type="submit" className="btn-primary min-h-12 w-full" disabled={status === "submitting"}>
+              <button type="submit" className="btn-primary h-11 w-full" disabled={status === "submitting"}>
                 {status === "submitting" ? "Sending…" : "Send message"}
               </button>
             </form>

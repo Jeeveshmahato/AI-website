@@ -12,7 +12,6 @@ export default defineConfig({
         // Long-lived vendor chunks: app deploys don't invalidate cached libraries.
         manualChunks: {
           react: ["react", "react-dom", "react-router-dom"],
-          motion: ["framer-motion"],
         },
       },
     },

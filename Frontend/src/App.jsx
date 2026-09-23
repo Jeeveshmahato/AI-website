@@ -1,6 +1,5 @@
 import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { MotionConfig } from "framer-motion";
 import Navbar from "./Components/Navbar";
 import Footer from "./Components/Footer";
 import ErrorBoundary from "./Components/ErrorBoundary";
@@ -24,7 +23,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 
 const PageLoader = () => (
   <div className="flex min-h-[60vh] items-center justify-center" role="status" aria-label="Loading">
-    <div className="size-8 animate-spin rounded-full border-2 border-indigo-400 border-t-transparent" />
+    <div className="size-6 animate-spin rounded-full border-2 border-line-strong border-t-fg" />
   </div>
 );
 
@@ -39,14 +38,13 @@ const ScrollToTop = () => {
 
 const App = () => (
   <ErrorBoundary>
-    <MotionConfig reducedMotion="user">
       <ToastProvider>
         <BrowserRouter>
           <CommandPaletteProvider>
             <ScrollToTop />
             <a
               href="#main"
-              className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-lg focus:bg-indigo-500 focus:px-4 focus:py-2 focus:text-white"
+              className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-lg focus:bg-fg focus:px-4 focus:py-2 focus:text-canvas"
             >
               Skip to content
             </a>
@@ -78,7 +76,6 @@ const App = () => (
           </CommandPaletteProvider>
         </BrowserRouter>
       </ToastProvider>
-    </MotionConfig>
   </ErrorBoundary>
 );
 
