@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { FiSearch, FiX, FiAlertTriangle, FiBookmark, FiRefreshCw } from "react-icons/fi";
+import { FiSearch, FiX, FiBookmark } from "react-icons/fi";
 import Seo from "../Components/Seo";
-import ToolCard, { ToolCardSkeleton } from "../Components/ToolCard";
+import ToolCard from "../Components/ToolCard";
+import SyncStatus from "../Components/SyncStatus";
 import { useTools } from "../lib/toolsStore";
 import { useSaved } from "../lib/personal";
 import { filterTools } from "../lib/filters";
 import { CATEGORIES, PRICING, SORT_OPTIONS } from "../lib/constants";
-import { cn } from "../lib/utils";
+import { cn, toolKey } from "../lib/utils";
 
 const PAGE_SIZE = 24;
 
@@ -29,8 +30,8 @@ const Chip = ({ active, onClick, children, count }) => (
 );
 
 const Directory = ({ savedOnly = false }) => {
-  const { tools, status, source, error, reload } = useTools();
-  const { savedIds } = useSaved();
+  const { tools } = useTools();
+  const { isSaved } = useSaved();
   const [params, setParams] = useSearchParams();
   const searchRef = useRef(null);
 
@@ -67,11 +68,11 @@ const Directory = ({ savedOnly = false }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
-  // "/" or Ctrl/Cmd+K focuses search.
+  // "/" focuses the page search (Ctrl/Cmd+K opens the global command palette).
   useEffect(() => {
     const onKey = (e) => {
       const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName);
-      if ((e.key === "/" && !typing) || (e.key.toLowerCase() === "k" && (e.metaKey || e.ctrlKey))) {
+      if (e.key === "/" && !typing && !e.defaultPrevented) {
         e.preventDefault();
         searchRef.current?.focus();
       }
@@ -80,7 +81,7 @@ const Directory = ({ savedOnly = false }) => {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const base = useMemo(() => (savedOnly ? tools.filter((t) => savedIds.has(t._id || t.slug)) : tools), [tools, savedOnly, savedIds]);
+  const base = useMemo(() => (savedOnly ? tools.filter(isSaved) : tools), [tools, savedOnly, isSaved]);
 
   const results = useMemo(() => filterTools(base, { q, category, price, sort }), [base, q, category, price, sort]);
 
@@ -91,7 +92,6 @@ const Directory = ({ savedOnly = false }) => {
   }, [base, q, price]);
 
   const activeFilters = [q && "q", category !== "All" && "category", price !== "All" && "price"].filter(Boolean);
-  const loading = status === "loading" || status === "idle";
 
   const clearAll = () => {
     setQuery("");
@@ -196,33 +196,20 @@ const Directory = ({ savedOnly = false }) => {
         </div>
       </div>
 
-      {source === "fallback" && (
-        <div className="mt-6 flex flex-col gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200 sm:flex-row sm:items-center">
-          <FiAlertTriangle className="shrink-0 text-lg" aria-hidden="true" />
-          <p className="flex-1">
-            We couldn't reach the server, so you're seeing our offline catalog. Upvotes and new tools will appear once we're
-            back.
-          </p>
-          <button type="button" onClick={reload} className="btn-secondary min-h-9 border-amber-500/30">
-            <FiRefreshCw aria-hidden="true" /> Retry
-          </button>
-        </div>
-      )}
-      {source !== "fallback" && error && (
-        <p className="mt-4 text-sm text-slate-500">Showing saved results. Couldn't refresh: {error}</p>
-      )}
-
       {/* Result summary */}
-      <div className="mt-6 flex min-h-8 flex-wrap items-center justify-between gap-2" aria-live="polite">
-        <p className="text-sm text-slate-400">
-          {loading ? "Loading tools…" : `${results.length} ${results.length === 1 ? "tool" : "tools"}`}
-          {q && !loading && (
-            <>
-              {" "}
-              for <span className="text-white">“{q}”</span>
-            </>
-          )}
-        </p>
+      <div className="mt-6 flex min-h-8 flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="text-sm text-slate-400" aria-live="polite">
+            {`${results.length} ${results.length === 1 ? "tool" : "tools"}`}
+            {q && (
+              <>
+                {" "}
+                for <span className="text-white">“{q}”</span>
+              </>
+            )}
+          </p>
+          <SyncStatus />
+        </div>
         {activeFilters.length > 0 && (
           <button type="button" onClick={clearAll} className="inline-flex items-center gap-1 text-sm text-indigo-300 hover:text-indigo-200">
             <FiX aria-hidden="true" /> Clear filters
@@ -231,12 +218,12 @@ const Directory = ({ savedOnly = false }) => {
       </div>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {loading
-          ? Array.from({ length: 9 }, (_, i) => <ToolCardSkeleton key={i} />)
-          : results.slice(0, visible).map((tool) => <ToolCard key={tool._id || tool.slug} tool={tool} />)}
+        {results.slice(0, visible).map((tool) => (
+          <ToolCard key={toolKey(tool)} tool={tool} />
+        ))}
       </div>
 
-      {!loading && results.length === 0 && (
+      {results.length === 0 && (
         <div className="card mx-auto mt-4 flex max-w-lg flex-col items-center px-6 py-14 text-center">
           {savedOnly && base.length === 0 ? (
             <>
@@ -265,7 +252,7 @@ const Directory = ({ savedOnly = false }) => {
         </div>
       )}
 
-      {!loading && results.length > visible && (
+      {results.length > visible && (
         <div className="mt-10 text-center">
           <button type="button" onClick={() => setVisible((v) => v + PAGE_SIZE)} className="btn-secondary">
             Show more ({results.length - visible} remaining)

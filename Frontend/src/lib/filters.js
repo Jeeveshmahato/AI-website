@@ -56,13 +56,10 @@ export function sortTools(tools, sort = "featured") {
  * Filters and sorts the full list client-side (the catalog is small enough to
  * load once), which makes every filter change instant.
  */
-export function filterTools(tools, { q = "", category = "All", price = "All", sort = "featured", savedIds = null } = {}) {
+export function filterTools(tools, { q = "", category = "All", price = "All", sort = "featured" } = {}) {
   const tokens = tokenize(q);
-  let result = tools.filter(
-    (t) =>
-      (category === "All" || t.category === category) &&
-      (price === "All" || t.price === price) &&
-      (!savedIds || savedIds.has(t._id || t.slug))
+  const result = tools.filter(
+    (t) => (category === "All" || t.category === category) && (price === "All" || t.price === price)
   );
 
   if (tokens.length) {

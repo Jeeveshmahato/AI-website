@@ -13,15 +13,20 @@ import {
   FiHeart,
   FiPlus,
   FiChevronDown,
+  FiSun,
+  FiClock,
 } from "react-icons/fi";
 import Seo from "../Components/Seo";
-import ToolCard, { ToolCardSkeleton } from "../Components/ToolCard";
+import ToolCard, { VisitLink } from "../Components/ToolCard";
 import ToolLogo from "../Components/ToolLogo";
 import Newsletter from "../Components/Newsletter";
+import CollectionCard from "../Components/CollectionCard";
+import collections from "../data/collections";
 import { useTools } from "../lib/toolsStore";
-import { CATEGORIES } from "../lib/constants";
+import { useRecent, resolveKeys } from "../lib/personal";
+import { CATEGORIES, PRICING_STYLES } from "../lib/constants";
 import { sortTools } from "../lib/filters";
-import { cn } from "../lib/utils";
+import { cn, toolKey, toolPath } from "../lib/utils";
 
 const POPULAR_SEARCHES = ["Chatbot", "Image", "Video", "Coding", "Voice", "Free"];
 
@@ -220,7 +225,7 @@ const TABS = [
   { key: "newest", label: "Just added" },
 ];
 
-const Spotlight = ({ tools, loading }) => {
+const Spotlight = ({ tools }) => {
   const [tab, setTab] = useState("featured");
   const shown = useMemo(() => {
     const pool = tab === "featured" && tools.some((t) => t.featured) ? tools.filter((t) => t.featured) : tools;
@@ -257,9 +262,9 @@ const Spotlight = ({ tools, loading }) => {
       </motion.div>
 
       <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" role="tabpanel">
-        {loading
-          ? Array.from({ length: 6 }, (_, i) => <ToolCardSkeleton key={i} />)
-          : shown.map((tool) => <ToolCard key={tool._id || tool.slug} tool={tool} />)}
+        {shown.map((tool) => (
+          <ToolCard key={toolKey(tool)} tool={tool} />
+        ))}
       </div>
 
       <div className="mt-10 text-center">
@@ -419,17 +424,117 @@ const CTA = () => (
   </section>
 );
 
+// Same pick for everyone all day (UTC), rotating daily: a small reason to come back.
+const ToolOfTheDay = ({ tools }) => {
+  const tool = useMemo(() => {
+    if (!tools.length) return null;
+    const sorted = [...tools].sort((a, b) => toolKey(a).localeCompare(toolKey(b)));
+    const day = Math.floor(Date.now() / 86_400_000);
+    return sorted[(day * 7919) % sorted.length]; // prime stride so neighbours aren't picked on consecutive days
+  }, [tools]);
+  if (!tool) return null;
+
+  return (
+    <section className="container-page mt-16" aria-labelledby="totd">
+      <motion.div
+        {...fadeUp}
+        className="relative isolate overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-ink-800 to-ink-900 p-6 sm:p-10"
+      >
+        <div className="absolute -right-20 -top-20 -z-10 size-72 rounded-full bg-indigo-600/20 blur-3xl" aria-hidden="true" />
+        <div className="flex flex-col gap-8 md:flex-row md:items-center">
+          <ToolLogo tool={tool} size="lg" className="ring-1 ring-white/10" />
+          <div className="min-w-0 flex-1">
+            <p id="totd" className="eyebrow flex items-center gap-2">
+              <FiSun aria-hidden="true" /> Tool of the day
+            </p>
+            <h2 className="mt-2 text-2xl font-bold tracking-tight text-white sm:text-3xl">{tool.name}</h2>
+            {tool.tagline && <p className="mt-1 text-lg text-slate-300">{tool.tagline}</p>}
+            <p className="mt-3 line-clamp-2 max-w-2xl text-slate-400">{tool.description}</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className={cn("badge", PRICING_STYLES[tool.price])}>{tool.price}</span>
+              <span className="badge bg-white/5 text-slate-300 ring-white/10">{tool.category}</span>
+            </div>
+          </div>
+          <div className="flex shrink-0 flex-wrap gap-3">
+            <Link to={toolPath(tool)} className="btn-secondary">
+              Learn more
+            </Link>
+            <VisitLink tool={tool} className="btn-primary">
+              Try it
+            </VisitLink>
+          </div>
+        </div>
+      </motion.div>
+    </section>
+  );
+};
+
+const RecentlyViewed = ({ tools }) => {
+  const recentKeys = useRecent();
+  const recent = resolveKeys(recentKeys, tools).slice(0, 4);
+  if (recent.length === 0) return null;
+  return (
+    <section className="container-page mt-16" aria-labelledby="recent">
+      <h2 id="recent" className="flex items-center gap-2 text-sm font-semibold uppercase tracking-widest text-slate-400">
+        <FiClock aria-hidden="true" /> Continue exploring
+      </h2>
+      <ul className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {recent.map((tool) => (
+          <li key={toolKey(tool)}>
+            <Link
+              to={toolPath(tool)}
+              className="flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-ink-850/60 p-3 transition-colors hover:border-white/15 hover:bg-ink-800"
+            >
+              <ToolLogo tool={tool} size="sm" />
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-semibold text-white">{tool.name}</span>
+                <span className="block truncate text-xs text-slate-500">{tool.category}</span>
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+};
+
+const Stacks = ({ tools }) => (
+  <section className="container-page mt-28">
+    <motion.div {...fadeUp}>
+      <SectionHeader
+        eyebrow="Curated stacks"
+        title="Start with a proven toolkit"
+        subtitle="Hand-picked combinations for creators, developers, students, marketers and founders."
+        action={
+          <Link to="/stacks" className="btn-secondary">
+            All stacks <FiArrowRight aria-hidden="true" />
+          </Link>
+        }
+      />
+    </motion.div>
+    <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {collections.slice(0, 3).map((c, i) => (
+        <motion.div key={c.slug} {...fadeUp} transition={{ ...fadeUp.transition, delay: i * 0.06 }}>
+          <CollectionCard collection={c} tools={tools} />
+        </motion.div>
+      ))}
+    </div>
+  </section>
+);
+
 const Home = () => {
-  const { tools, status } = useTools();
-  const loading = status === "loading" || status === "idle";
+  const { tools } = useTools();
 
   return (
     <>
       <Seo description="Discover and compare the best AI tools for writing, images, video, coding, research and productivity. Hand-curated, with honest pricing." path="/" />
       <Hero tools={tools} total={tools.length} />
       <Stats tools={tools} />
+      <RecentlyViewed tools={tools} />
+      <ToolOfTheDay tools={tools} />
       <Categories tools={tools} />
-      <Spotlight tools={tools} loading={loading} />
+      <Spotlight tools={tools} />
+      <Stacks tools={tools} />
       <HowItWorks />
       <Values />
       <FAQ />

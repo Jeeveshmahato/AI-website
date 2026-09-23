@@ -1,10 +1,10 @@
 import { memo } from "react";
 import { Link } from "react-router-dom";
-import { FiArrowUpRight, FiBookmark, FiChevronUp, FiStar } from "react-icons/fi";
+import { FiArrowUpRight, FiBookmark, FiChevronUp, FiColumns, FiStar } from "react-icons/fi";
 import ToolLogo from "./ToolLogo";
 import { PRICING_STYLES } from "../lib/constants";
 import { api } from "../lib/api";
-import { useSaved, useUpvotes } from "../lib/personal";
+import { useCompare, useSaved, useUpvotes, MAX_COMPARE } from "../lib/personal";
 import { useToast } from "./Toast";
 import { cn, formatCount, isNew, safeUrl, toolPath } from "../lib/utils";
 
@@ -66,7 +66,34 @@ export const SaveButton = ({ tool, className, withLabel = false }) => {
   );
 };
 
-export const VisitLink = ({ tool, className, children = "Visit" }) => (
+export const CompareButton = ({ tool, className }) => {
+  const { inCompare, toggleCompare } = useCompare();
+  const toast = useToast();
+  const active = inCompare(tool);
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.preventDefault();
+        if (toggleCompare(tool) === "full") toast(`You can compare up to ${MAX_COMPARE} tools at once`, "error");
+      }}
+      aria-pressed={active}
+      aria-label={active ? `Remove ${tool.name} from compare` : `Add ${tool.name} to compare`}
+      title={active ? "Remove from compare" : "Add to compare"}
+      className={cn(
+        "inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg border transition-colors",
+        active
+          ? "border-indigo-400/50 bg-indigo-500/15 text-indigo-200"
+          : "border-white/10 bg-white/[0.03] text-slate-400 hover:text-white",
+        className
+      )}
+    >
+      <FiColumns aria-hidden="true" />
+    </button>
+  );
+};
+
+export const VisitLink =({ tool, className, children = "Visit" }) => (
   <a
     href={safeUrl(tool.link)}
     target="_blank"
@@ -111,6 +138,7 @@ const ToolCard = ({ tool }) => {
         {isNew(tool) && <span className="badge bg-fuchsia-500/10 text-fuchsia-300 ring-fuchsia-500/30">New</span>}
         <div className="relative z-10 ml-auto flex items-center gap-2">
           <SaveButton tool={tool} className="min-h-9 min-w-9 rounded-lg" />
+          <CompareButton tool={tool} />
           <VisitLink
             tool={tool}
             className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-white/10 bg-white/[0.03] px-3 text-sm font-medium text-slate-200 transition-colors hover:border-indigo-400/40 hover:text-white"
@@ -120,22 +148,5 @@ const ToolCard = ({ tool }) => {
     </article>
   );
 };
-
-export const ToolCardSkeleton = () => (
-  <div className="rounded-2xl border border-white/[0.07] bg-ink-850/70 p-5" aria-hidden="true">
-    <div className="flex items-start gap-4">
-      <div className="skeleton size-12 rounded-xl" />
-      <div className="flex-1 space-y-2">
-        <div className="skeleton h-4 w-2/3" />
-        <div className="skeleton h-3 w-1/3" />
-      </div>
-    </div>
-    <div className="mt-5 space-y-2">
-      <div className="skeleton h-3 w-full" />
-      <div className="skeleton h-3 w-4/5" />
-    </div>
-    <div className="skeleton mt-6 h-6 w-20 rounded-full" />
-  </div>
-);
 
 export default memo(ToolCard);

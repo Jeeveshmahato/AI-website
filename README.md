@@ -12,11 +12,14 @@ A hand-curated directory of AI tools: search, filter, compare, upvote and save t
 | --- | --- |
 | Discovery | Relevance-ranked search (`/` or `Ctrl+K`), 11 categories, pricing filter (Free / Freemium / Paid), sort by featured, upvotes, trending, newest, A–Z. Filters live in the URL, so every search is shareable. |
 | Tool pages | `/tools/:slug` with description, tags, pricing notes, share button, alternatives, and SoftwareApplication structured data for SEO. |
-| Engagement | Upvotes, saved tools (`/saved`, stored in the browser), visit tracking that powers "Trending". |
+| Engagement | Upvotes, saved tools (`/saved`, stored in the browser), visit tracking that powers "Trending", "Tool of the day", "Continue exploring" (recently viewed). |
+| Compare | Pick up to 3 tools from any card; a floating tray follows you, and `/compare?tools=a,b,c` gives a shareable side-by-side table. |
+| Curated stacks | `/stacks`: hand-picked toolkits (creator, developer, student, marketing, founder, free). Edit them in `Frontend/src/data/collections.js`. |
+| Command palette | `Ctrl/⌘ + K` on any page: instant search across tools, categories and stacks, with keyboard navigation. |
 | Submissions | Public form with live preview. Submissions are **pending** until approved in `/admin`. |
 | Admin | `/admin`: approve, reject, feature and delete tools, and read contact messages. Sign in with the backend `API_KEY`. |
 | Contact and newsletter | Working contact form and newsletter signup (stored in MongoDB), with honeypot spam protection. |
-| Resilience | Stale-while-revalidate caching, retries for cold starts, and a bundled offline catalog so the site never shows an empty page. |
+| Resilience | Content renders instantly (cached or bundled catalog) and live data syncs in the background, retrying with backoff and on tab focus or reconnect, so Render cold starts never show an empty or broken page. |
 
 ## Local development
 
@@ -63,9 +66,9 @@ Deploy `Backend/` as its own project: `api/index.js` exports the Express app and
 ## Troubleshooting
 
 **CORS error / "Failed to fetch" while the API returns 200.**
-The response is missing `Access-Control-Allow-Origin`, which means the request's `Origin` isn't in `CLIENT_URL`. Open `/health` and compare `corsOrigins` with the site's address bar, character for character (`https`, `www`, trailing slash). The backend log also prints `[cors] Blocked origin "..."` for every rejected origin.
+The response is missing `Access-Control-Allow-Origin`, which means the request's `Origin` isn't allowed. `https://ai-website-frontend.onrender.com` is always allowed (see `Backend/config/env.js`); any other origin (custom domain, Vercel) must be in `CLIENT_URL`. Open `/health` and compare `corsOrigins` with the site's address bar, character for character (`https`, `www`, trailing slash). The backend log prints `[cors] Blocked origin "..."`, and the browser console explains the likely cause too.
 
-**Tools page shows "offline catalog".** The frontend can't reach the API. Check `VITE_BASEURL` (then redeploy the frontend) and `/health`.
+**Tools page says "Showing our offline catalog".** The frontend couldn't reach the API after several background retries. Check `VITE_BASEURL` (then redeploy the frontend), `/health`, and the CORS note above.
 
 **`/health` says `db: unreachable`.** Check the Atlas IP allowlist and `MONGO_URI`.
 

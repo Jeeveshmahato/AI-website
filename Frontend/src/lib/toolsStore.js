@@ -1,15 +1,38 @@
 import { useEffect, useSyncExternalStore } from "react";
-import { api } from "./api";
+import { api, API_BASE } from "./api";
 import { readJSON, writeJSON } from "./storage";
 import fallbackTools from "../data/fallbackTools";
 
 const CACHE_KEY = "aitools_cache_v2";
-const CACHE_TTL = 10 * 60 * 1000;
+const RETRY_DELAYS = [5_000, 10_000, 20_000, 30_000, 60_000]; // then every 60s
+const MAX_BACKGROUND_ATTEMPTS = 12; // ~10 minutes; focus/online events restart it
 
-// One shared store so every page (home, directory, detail) reuses a single fetch.
-// source: "live" (fresh from API) | "cache" (localStorage) | "fallback" (bundled catalog)
-let state = { tools: [], status: "idle", error: null, source: null };
+/*
+ * Shared, stale-while-revalidate tools store.
+ *
+ * The page always has content immediately: last good API response from localStorage,
+ * or the bundled catalog on a first visit. A background sync then swaps in live data,
+ * retrying with backoff (free-tier hosts can take ~50s to wake), and again whenever
+ * the tab regains focus or the network comes back.
+ *
+ * source:  "live" | "cache" | "fallback"
+ * syncing: a request is in flight
+ * error:   last sync error message (cleared on success)
+ */
+const cached = readJSON(CACHE_KEY, null);
+const hasCache = cached && Array.isArray(cached.data) && cached.data.length > 0;
+
+let state = {
+  tools: hasCache ? cached.data : fallbackTools,
+  source: hasCache ? "cache" : "fallback",
+  syncing: false,
+  error: null,
+  attempts: 0,
+};
 let inflight = null;
+let retryTimer = null;
+let started = false;
+let warned = false;
 const listeners = new Set();
 
 function setState(patch) {
@@ -17,47 +40,60 @@ function setState(patch) {
   listeners.forEach((l) => l());
 }
 
-function readCache() {
-  const cached = readJSON(CACHE_KEY, null);
-  return cached && Array.isArray(cached.data) ? cached : null;
+function scheduleRetry() {
+  clearTimeout(retryTimer);
+  if (state.attempts >= MAX_BACKGROUND_ATTEMPTS) return;
+  const delay = RETRY_DELAYS[Math.min(state.attempts - 1, RETRY_DELAYS.length - 1)];
+  retryTimer = setTimeout(() => syncTools(), delay);
 }
 
-export function loadTools({ force = false } = {}) {
+export function syncTools({ manual = false } = {}) {
   if (inflight) return inflight;
-  const cached = readCache();
-
-  if (!force && state.source === "live") return Promise.resolve();
-  if (!force && cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    setState({ tools: cached.data, status: "ready", source: "cache", error: null });
-    return Promise.resolve();
-  }
-
-  // Show stale data instantly while revalidating in the background.
-  if (state.tools.length === 0 && cached) {
-    setState({ tools: cached.data, status: "ready", source: "cache" });
-  } else if (state.tools.length === 0) {
-    setState({ status: "loading", error: null });
-  }
+  clearTimeout(retryTimer);
+  if (manual) setState({ attempts: 0 });
+  setState({ syncing: true });
 
   inflight = api
-    .listTools()
+    .listTools({ retries: 1 })
     .then((data) => {
       if (!Array.isArray(data)) throw new Error("Invalid response from server");
       writeJSON(CACHE_KEY, { data, timestamp: Date.now() });
-      setState({ tools: data, status: "ready", source: "live", error: null });
+      setState({ tools: data, source: "live", syncing: false, error: null, attempts: 0 });
     })
     .catch((err) => {
-      if (state.tools.length > 0 && state.source !== "fallback") {
-        setState({ status: "ready", error: err.message });
-      } else {
-        // Never show an empty site: fall back to the bundled curated catalog.
-        setState({ tools: fallbackTools, status: "ready", source: "fallback", error: err.message });
+      if (!warned) {
+        warned = true;
+        // The browser reports CORS rejections as generic network errors, so spell out the likely cause.
+        console.warn(
+          `[api] Could not load tools from ${API_BASE || "(VITE_BASEURL not set)"}: ${err.message}\n` +
+            `If ${API_BASE}/health opens fine in a browser tab, the backend's CLIENT_URL probably ` +
+            `doesn't include ${window.location.origin} (CORS).`
+        );
       }
+      setState({ syncing: false, error: err.message, attempts: state.attempts + 1 });
+      scheduleRetry();
     })
     .finally(() => {
       inflight = null;
     });
   return inflight;
+}
+
+function start() {
+  if (started) return;
+  started = true;
+  syncTools();
+
+  const resumeIfStale = () => {
+    if (state.source !== "live" && !inflight) {
+      setState({ attempts: 0 });
+      syncTools();
+    }
+  };
+  window.addEventListener("online", resumeIfStale);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") resumeIfStale();
+  });
 }
 
 export function updateTool(id, patch) {
@@ -72,8 +108,15 @@ const getSnapshot = () => state;
 
 export function useTools() {
   const snapshot = useSyncExternalStore(subscribe, getSnapshot);
-  useEffect(() => {
-    loadTools();
-  }, []);
-  return { ...snapshot, reload: () => loadTools({ force: true }) };
+  useEffect(start, []);
+  return {
+    ...snapshot,
+    isLive: snapshot.source === "live",
+    // True while we are still hoping to replace non-live data soon.
+    pending: snapshot.source !== "live" && (snapshot.syncing || snapshot.attempts < MAX_BACKGROUND_ATTEMPTS),
+    reload: () => syncTools({ manual: true }),
+  };
 }
+
+// Admin changes: refresh without waiting for the next focus event.
+export const loadTools = ({ force } = {}) => (force ? syncTools({ manual: true }) : Promise.resolve());

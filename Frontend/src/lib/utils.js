@@ -25,8 +25,25 @@ export function faviconUrl(url, size = 128) {
   return domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=${size}` : "";
 }
 
+export function slugify(value) {
+  return String(value ?? "")
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+}
+
+// Stable identity shared by live, cached and offline-catalog records (which have no _id).
+// Mirrors the backend's slug generation, so older records without a slug still match.
+export function toolKey(tool) {
+  return tool.slug || slugify(tool.name) || tool._id;
+}
+
 export function toolPath(tool) {
-  return `/tools/${tool.slug || tool._id}`;
+  return `/tools/${toolKey(tool)}`;
 }
 
 export function formatCount(n) {

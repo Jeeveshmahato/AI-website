@@ -60,6 +60,12 @@ test("CORS allows configured and wildcard origins", async () => {
   }
 });
 
+test("CORS always allows the production frontend, even if CLIENT_URL is stale", async () => {
+  const origin = "https://ai-website-frontend.onrender.com";
+  const res = await fetch(`${base}/`, { headers: { Origin: origin } });
+  assert.equal(res.headers.get("access-control-allow-origin"), origin);
+});
+
 test("CORS rejects unknown origins without a 500", async () => {
   const res = await fetch(`${base}/`, { headers: { Origin: "https://evil.example" } });
   assert.equal(res.status, 200);

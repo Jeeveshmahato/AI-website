@@ -1,5 +1,5 @@
 import { useId, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { FiCheckCircle, FiMessageCircle, FiPlusCircle, FiFlag } from "react-icons/fi";
 import Seo from "../Components/Seo";
 import { api } from "../lib/api";
@@ -15,7 +15,9 @@ const TOPICS = [
 
 const Contact = () => {
   const id = useId();
-  const [values, setValues] = useState(EMPTY);
+  const [params] = useSearchParams();
+  // Deep links such as "Report an issue" prefill the subject.
+  const [values, setValues] = useState(() => ({ ...EMPTY, subject: (params.get("subject") || "").slice(0, 150) }));
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState("idle");
   const [formError, setFormError] = useState("");

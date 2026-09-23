@@ -21,15 +21,15 @@ export const ToastProvider = ({ children }) => {
       {children}
       <div
         aria-live="polite"
-        className="pointer-events-none fixed inset-x-0 bottom-4 z-[100] flex flex-col items-center gap-2 px-4"
+        className="pointer-events-none fixed inset-x-0 top-20 z-[100] flex flex-col items-center gap-2 px-4"
       >
         <AnimatePresence>
           {toasts.map((t) => (
             <motion.div
               key={t.id}
-              initial={{ opacity: 0, y: 16, scale: 0.96 }}
+              initial={{ opacity: 0, y: -16, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 8, scale: 0.96 }}
+              exit={{ opacity: 0, y: -8, scale: 0.96 }}
               className="pointer-events-auto flex items-center gap-2 rounded-xl border border-white/10 bg-ink-800/95 px-4 py-3 text-sm text-slate-100 shadow-2xl backdrop-blur"
             >
               {t.type === "error" ? (

@@ -9,9 +9,10 @@ const COLUMNS = [
     title: "Directory",
     links: [
       { label: "All tools", to: "/aitools" },
-      { label: "Featured", to: "/aitools?sort=featured" },
       { label: "Trending", to: "/aitools?sort=trending" },
       { label: "Free tools", to: "/aitools?price=Free" },
+      { label: "Curated stacks", to: "/stacks" },
+      { label: "Compare tools", to: "/compare" },
       { label: "Saved tools", to: "/saved" },
     ],
   },

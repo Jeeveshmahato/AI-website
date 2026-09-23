@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { FiChevronRight, FiShare2, FiGlobe, FiTag, FiCalendar, FiStar, FiArrowRight } from "react-icons/fi";
+import { FiChevronRight, FiShare2, FiGlobe, FiTag, FiCalendar, FiStar, FiArrowRight, FiColumns, FiFlag } from "react-icons/fi";
 import Seo from "../Components/Seo";
 import ToolLogo from "../Components/ToolLogo";
 import ToolCard, { SaveButton, UpvoteButton, VisitLink } from "../Components/ToolCard";
@@ -9,7 +9,8 @@ import NotFound from "./NotFound";
 import { useTools } from "../lib/toolsStore";
 import { api } from "../lib/api";
 import { getCategory, PRICING_STYLES } from "../lib/constants";
-import { cn, formatDate, getDomain, safeUrl } from "../lib/utils";
+import { recordView, useCompare, MAX_COMPARE } from "../lib/personal";
+import { cn, formatDate, getDomain, safeUrl, toolKey } from "../lib/utils";
 
 const PRICING_NOTES = {
   Free: "Completely free to use.",
@@ -32,19 +33,18 @@ const DetailSkeleton = () => (
 
 const ToolDetail = () => {
   const { slug } = useParams();
-  const { tools, status, source } = useTools();
+  const { tools, isLive, pending } = useTools();
   const toast = useToast();
+  const { inCompare, toggleCompare } = useCompare();
   const [remote, setRemote] = useState({ slug: null, tool: null, done: false });
 
-  const fromList = useMemo(
-    () => tools.find((t) => t.slug === slug || t._id === slug),
-    [tools, slug]
-  );
+  const fromList = useMemo(() => tools.find((t) => toolKey(t) === slug || t._id === slug), [tools, slug]);
   const tool = fromList || (remote.slug === slug ? remote.tool : null);
+  const key = tool ? toolKey(tool) : null;
 
-  // Not in the loaded list (e.g. beyond the list limit): ask the API directly.
+  // Not in the live list (e.g. beyond the list limit): ask the API directly.
   useEffect(() => {
-    if (fromList || status !== "ready" || source === "fallback" || remote.slug === slug) return;
+    if (fromList || !isLive || remote.slug === slug) return;
     let cancelled = false;
     api
       .getTool(slug, { retries: 0 })
@@ -53,20 +53,34 @@ const ToolDetail = () => {
     return () => {
       cancelled = true;
     };
-  }, [fromList, status, source, slug, remote.slug]);
+  }, [fromList, isLive, slug, remote.slug]);
+
+  useEffect(() => {
+    if (tool) recordView(tool);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
 
   const similar = useMemo(() => {
     if (!tool) return [];
     return tools
-      .filter((t) => t.category === tool.category && (t._id || t.slug) !== (tool._id || tool.slug))
+      .filter((t) => t.category === tool.category && toolKey(t) !== key)
       .sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0) || (b.upvotes || 0) - (a.upvotes || 0))
       .slice(0, 3);
-  }, [tools, tool]);
+  }, [tools, tool, key]);
 
   if (!tool) {
-    const settled = status === "ready" && (source === "fallback" || (remote.slug === slug && remote.done));
+    // Only 404 once we're sure: live data (and a direct lookup) came back without it,
+    // or background syncing has given up. Until then, it may simply not be loaded yet.
+    const settled = isLive ? remote.slug === slug && remote.done : !pending;
     return settled ? <NotFound /> : <DetailSkeleton />;
   }
+
+  const comparing = inCompare(tool);
+  const onCompare = () => {
+    const result = toggleCompare(tool);
+    if (result === "full") toast(`You can compare up to ${MAX_COMPARE} tools at once`, "error");
+    else toast(result === "added" ? `Added ${tool.name} to compare` : `Removed ${tool.name} from compare`);
+  };
 
   const { icon: CategoryIcon } = getCategory(tool.category);
   const domain = getDomain(tool.link);
@@ -98,7 +112,7 @@ const ToolDetail = () => {
 
   return (
     <div className="container-page pt-8 sm:pt-12">
-      <Seo title={`${tool.name}: ${tool.tagline || tool.category}`} description={tool.description.slice(0, 160)} path={`/tools/${tool.slug || tool._id}`} />
+      <Seo title={`${tool.name}: ${tool.tagline || tool.category}`} description={tool.description.slice(0, 160)} path={`/tools/${key}`} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd }} />
 
       <nav aria-label="Breadcrumb" className="text-sm text-slate-500">
@@ -150,6 +164,14 @@ const ToolDetail = () => {
         <div className="flex flex-wrap items-center gap-2 md:justify-end">
           <UpvoteButton tool={tool} className="min-h-12 min-w-12" />
           <SaveButton tool={tool} withLabel className="min-h-12" />
+          <button
+            type="button"
+            onClick={onCompare}
+            aria-pressed={comparing}
+            className={cn("btn-secondary min-h-12", comparing && "border-indigo-400/50 bg-indigo-500/15 text-indigo-100")}
+          >
+            <FiColumns aria-hidden="true" /> {comparing ? "Comparing" : "Compare"}
+          </button>
           <button type="button" onClick={share} className="btn-secondary min-h-12" aria-label={`Share ${tool.name}`}>
             <FiShare2 aria-hidden="true" /> Share
           </button>
@@ -213,25 +235,39 @@ const ToolDetail = () => {
               </div>
             )}
           </dl>
+          <Link
+            to={`/contact?subject=${encodeURIComponent(`Issue with ${tool.name}`)}`}
+            className="mt-6 inline-flex items-center gap-2 border-t border-white/[0.07] pt-5 text-sm text-slate-400 hover:text-white"
+          >
+            <FiFlag aria-hidden="true" /> Report outdated info or a broken link
+          </Link>
         </aside>
       </div>
 
       {similar.length > 0 && (
         <section className="mt-20" aria-labelledby="similar">
-          <div className="flex items-end justify-between gap-4">
+          <div className="flex flex-wrap items-end justify-between gap-4">
             <h2 id="similar" className="text-2xl font-bold tracking-tight text-white">
               Alternatives to {tool.name}
             </h2>
-            <Link
-              to={`/aitools?category=${encodeURIComponent(tool.category)}`}
-              className="hidden items-center gap-1 text-sm text-indigo-300 hover:text-indigo-200 sm:inline-flex"
-            >
-              All {tool.category} tools <FiArrowRight aria-hidden="true" />
-            </Link>
+            <div className="flex flex-wrap items-center gap-4">
+              <Link
+                to={`/compare?tools=${[key, ...similar.slice(0, MAX_COMPARE - 1).map(toolKey)].join(",")}`}
+                className="inline-flex items-center gap-1 text-sm font-medium text-indigo-300 hover:text-indigo-200"
+              >
+                <FiColumns aria-hidden="true" /> Compare side by side
+              </Link>
+              <Link
+                to={`/aitools?category=${encodeURIComponent(tool.category)}`}
+                className="hidden items-center gap-1 text-sm text-slate-400 hover:text-white sm:inline-flex"
+              >
+                All {tool.category} tools <FiArrowRight aria-hidden="true" />
+              </Link>
+            </div>
           </div>
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {similar.map((t) => (
-              <ToolCard key={t._id || t.slug} tool={t} />
+              <ToolCard key={toolKey(t)} tool={t} />
             ))}
           </div>
         </section>
