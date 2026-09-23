@@ -81,7 +81,7 @@ const Navbar = () => {
             <FiSearch aria-hidden="true" />
           </button>
           <ThemeToggle />
-          <Link to="/submit" className="btn-primary hidden h-9 min-h-0 px-3.5 lg:inline-flex">
+          <Link to="/submit" className="btn-secondary hidden h-9 min-h-0 px-3.5 lg:inline-flex">
             Submit a tool
           </Link>
           <button

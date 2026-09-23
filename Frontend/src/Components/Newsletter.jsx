@@ -56,7 +56,7 @@ const Newsletter = () => {
           aria-invalid={status === "error"}
           aria-describedby={`${id}-msg`}
         />
-        <button type="submit" className="btn-primary shrink-0" disabled={status === "loading"}>
+        <button type="submit" className="btn-secondary shrink-0" disabled={status === "loading"}>
           {status === "loading" ? "Subscribing…" : "Subscribe"}
         </button>
       </div>

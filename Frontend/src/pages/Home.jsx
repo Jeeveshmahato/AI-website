@@ -233,7 +233,7 @@ const ToolOfTheDay = ({ tools }) => {
         <Link to={toolPath(tool)} className="btn-secondary min-h-9 flex-1">
           Details
         </Link>
-        <VisitLink tool={tool} className="btn-primary min-h-9 flex-1">
+        <VisitLink tool={tool} className="btn-secondary min-h-9 flex-1">
           Visit
         </VisitLink>
       </div>

@@ -9,9 +9,9 @@
  *
  * Colour rules:
  *  - Warm neutrals (stone) do ~95% of the work: text, surfaces, borders.
- *  - One accent (deep orange), used sparingly: brand mark, selected/active states
- *    (upvoted, saved, comparing), featured star, focus ring. Never large fills.
- *  - Primary buttons are inverted neutrals (fg on canvas), not accent.
+ *  - Brand (fixed #c2410c, see below): logo mark and primary buttons only, solid fills.
+ *  - Accent (the same hue, lightened in dark mode for legibility): text/icons for
+ *    selected states (upvoted, saved, comparing), featured star, focus ring.
  *  - Semantic colours (success/warning/danger) only carry meaning.
  *  - Every text colour meets WCAG AA (>= 4.5:1) on canvas and surface in both themes:
  *    light fg 17.5:1, fg-muted 7.6:1, fg-subtle 4.8:1, accent 5.2:1;
@@ -53,6 +53,16 @@
   --danger: #f87171;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.3);
   color-scheme: dark;
+}
+
+/*
+ * Brand colour: fixed, identical in light and dark themes, solid fills only (no gradients).
+ * Used for the logo mark and primary buttons. White text on it: 5.2:1 (hover 7.3:1), WCAG AA.
+ */
+@theme {
+  --color-brand: #c2410c;
+  --color-brand-hover: #9a3412;
+  --color-brand-fg: #ffffff;
 }
 
 @theme inline {
@@ -149,11 +159,9 @@
 @utility btn {
   @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium whitespace-nowrap transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50;
 }
+/* Primary = the one main action in an area. Solid, fixed brand colour in both themes. */
 @utility btn-primary {
-  @apply btn bg-fg text-canvas hover:bg-fg/85;
-}
-@utility btn-accent {
-  @apply btn bg-accent text-white hover:bg-accent/90;
+  @apply btn bg-brand text-brand-fg hover:bg-brand-hover active:bg-brand-hover;
 }
 @utility btn-secondary {
   @apply btn border border-line bg-surface text-fg shadow-[0_1px_1px_rgb(0_0_0/0.03)] hover:border-line-strong hover:bg-surface-2;

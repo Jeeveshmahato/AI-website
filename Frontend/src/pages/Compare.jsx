@@ -168,7 +168,7 @@ const Compare = () => {
                         </Link>
                         {tool.tagline && <p className="mt-1 text-sm text-fg-muted">{tool.tagline}</p>}
                       </div>
-                      <VisitLink tool={tool} className="btn-primary mt-auto min-h-9 w-full">
+                      <VisitLink tool={tool} className="btn-secondary mt-auto min-h-9 w-full">
                         Visit
                       </VisitLink>
                     </div>
