@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { FiSearch, FiX, FiBookmark, FiGrid, FiList } from "react-icons/fi";
+import { FiSearch, FiX, FiBookmark, FiGrid, FiList, FiShare2 } from "react-icons/fi";
 import Seo from "../Components/Seo";
 import ToolCard, { ToolRow } from "../Components/ToolCard";
 import SyncStatus from "../Components/SyncStatus";
+import { useToast } from "../Components/Toast";
 import { useTools } from "../lib/toolsStore";
-import { useSaved } from "../lib/personal";
+import { useSaved, resolveKeys } from "../lib/personal";
 import { filterTools } from "../lib/filters";
 import { readJSON, writeJSON } from "../lib/storage";
 import { CATEGORIES, PRICING, PRICING_DOT, SORT_OPTIONS } from "../lib/constants";
@@ -43,8 +44,9 @@ const Chip = ({ active, onClick, children }) => (
 );
 
 const Directory = ({ savedOnly = false }) => {
-  const { tools } = useTools();
-  const { isSaved } = useSaved();
+  const { tools, isLive } = useTools();
+  const { isSaved, savedKeys, saveMany, removeKeys } = useSaved();
+  const toast = useToast();
   const [params, setParams] = useSearchParams();
   const searchRef = useRef(null);
 
@@ -100,7 +102,39 @@ const Directory = ({ savedOnly = false }) => {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const base = useMemo(() => (savedOnly ? tools.filter(isSaved) : tools), [tools, savedOnly, isSaved]);
+  // /saved?tools=a,b,c shows someone else's shared list (read-only until imported).
+  const sharedKeys = useMemo(() => {
+    const raw = savedOnly ? params.get("tools") : null;
+    return raw ? [...new Set(raw.split(",").map((s) => s.trim()).filter(Boolean))].slice(0, 50) : null;
+  }, [savedOnly, params]);
+  const isShared = Boolean(sharedKeys);
+
+  const base = useMemo(() => {
+    if (!savedOnly) return tools;
+    return isShared ? resolveKeys(sharedKeys, tools) : tools.filter(isSaved);
+  }, [tools, savedOnly, isShared, sharedKeys, isSaved]);
+
+  // Saved keys that don't match any tool in the directory (e.g. a tool that was removed).
+  const missingSaved = useMemo(() => {
+    if (!savedOnly || isShared) return [];
+    const known = new Set(tools.flatMap((t) => [toolKey(t), t._id].filter(Boolean)));
+    return savedKeys.filter((k) => !known.has(k));
+  }, [savedOnly, isShared, tools, savedKeys]);
+
+  const shareList = async () => {
+    const url = `${window.location.origin}/saved?tools=${base.map(toolKey).join(",")}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast("Link to your list copied");
+    } catch {
+      toast("Couldn't copy the link", "error");
+    }
+  };
+
+  const importShared = () => {
+    const added = saveMany(base);
+    toast(added ? `Added ${added} ${added === 1 ? "tool" : "tools"} to your saved list` : "You've already saved all of these");
+  };
   const results = useMemo(() => filterTools(base, { q, category, price, sort }), [base, q, category, price, sort]);
 
   // Facet counts: each facet is counted with the *other* active filters applied.
@@ -119,12 +153,16 @@ const Directory = ({ savedOnly = false }) => {
 
   const hasFilters = Boolean(q) || category !== "All" || price !== "All";
 
+  // Clears filters but keeps the sort order and any shared list.
   const clearAll = () => {
     setQuery("");
-    setParams(sort !== "featured" ? { sort } : {}, { replace: true });
+    const keep = {};
+    if (sort !== "featured") keep.sort = sort;
+    if (params.get("tools")) keep.tools = params.get("tools");
+    setParams(keep, { replace: true });
   };
 
-  const title = savedOnly ? "Saved tools" : category !== "All" ? `${category} tools` : "All AI tools";
+  const title = isShared ? "Shared list" : savedOnly ? "Saved tools" : category !== "All" ? `${category} tools` : "All AI tools";
 
   return (
     <div className="container-page pt-10">
@@ -138,14 +176,45 @@ const Directory = ({ savedOnly = false }) => {
         noindex={savedOnly}
       />
 
-      <header className="flex flex-col gap-1 border-b border-line pb-6">
-        <h1 className="text-3xl font-semibold tracking-tight text-fg">{title}</h1>
-        <p className="text-fg-muted">
-          {savedOnly
-            ? "Your shortlist, stored privately in this browser."
-            : "Search by task, then narrow down by category and pricing."}
-        </p>
+      <header className="flex flex-col gap-4 border-b border-line pb-6 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight text-fg">{title}</h1>
+          <p className="mt-1 text-fg-muted">
+            {isShared
+              ? `Someone shared ${base.length} ${base.length === 1 ? "tool" : "tools"} with you.`
+              : savedOnly
+                ? "Your shortlist, stored privately in this browser."
+                : "Search by task, then narrow down by category and pricing."}
+          </p>
+        </div>
+        {isShared && base.length > 0 && (
+          <div className="flex gap-2">
+            <Link to="/saved" className="btn-secondary">
+              My saved
+            </Link>
+            <button type="button" onClick={importShared} className="btn-primary">
+              <FiBookmark aria-hidden="true" /> Save all
+            </button>
+          </div>
+        )}
+        {savedOnly && !isShared && base.length > 0 && (
+          <button type="button" onClick={shareList} className="btn-secondary self-start sm:self-auto">
+            <FiShare2 aria-hidden="true" /> Share list
+          </button>
+        )}
       </header>
+
+      {isLive && missingSaved.length > 0 && (
+        <div className="mt-4 flex flex-col gap-3 rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm text-fg-muted sm:flex-row sm:items-center sm:justify-between">
+          <p>
+            {missingSaved.length === 1 ? "1 saved tool is" : `${missingSaved.length} saved tools are`} no longer listed in the
+            directory.
+          </p>
+          <button type="button" onClick={() => removeKeys(missingSaved)} className="btn-ghost min-h-8 self-start px-2 sm:self-auto">
+            Remove from saved
+          </button>
+        </div>
+      )}
 
       <div className="mt-6 grid gap-8 lg:grid-cols-[220px_1fr]">
         {/* Desktop facets */}
@@ -295,7 +364,7 @@ const Directory = ({ savedOnly = false }) => {
 
           {results.length === 0 && (
             <div className="mt-3 flex flex-col items-center rounded-xl border border-dashed border-line-strong px-6 py-16 text-center">
-              {savedOnly && base.length === 0 ? (
+              {savedOnly && !isShared && base.length === 0 ? (
                 <>
                   <FiBookmark className="text-2xl text-fg-subtle" aria-hidden="true" />
                   <h2 className="mt-3 font-semibold text-fg">No saved tools yet</h2>

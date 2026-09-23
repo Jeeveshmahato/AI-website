@@ -1,14 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { FiMenu, FiX, FiSearch } from "react-icons/fi";
 import { cn } from "../lib/utils";
-import { useSaved } from "../lib/personal";
+import { useSaved, resolveKeys } from "../lib/personal";
+import { useTools } from "../lib/toolsStore";
 import { useCommandPalette, shortcutLabel } from "./CommandPalette";
 import ThemeToggle from "./ThemeToggle";
 import Logo from "./Logo";
 
 const NAV_ITEMS = [
   { label: "Explore", path: "/aitools" },
+  { label: "Finder", path: "/finder" },
   { label: "Categories", path: "/categories" },
   { label: "Stacks", path: "/stacks" },
   { label: "Compare", path: "/compare" },
@@ -19,7 +21,10 @@ const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
   const openPalette = useCommandPalette();
-  const { savedCount } = useSaved();
+  const { savedKeys } = useSaved();
+  const { tools } = useTools();
+  // Count only saved tools that can actually be shown (a saved tool may have been removed).
+  const savedCount = useMemo(() => resolveKeys(savedKeys, tools).length, [savedKeys, tools]);
 
   useEffect(() => setMenuOpen(false), [location.pathname]);
 

@@ -13,6 +13,7 @@ const Directory = lazy(() => import("./pages/Directory"));
 const ToolDetail = lazy(() => import("./pages/ToolDetail"));
 const Categories = lazy(() => import("./pages/Categories"));
 const Compare = lazy(() => import("./pages/Compare"));
+const Finder = lazy(() => import("./pages/Finder"));
 const CollectionsIndex = lazy(() => import("./pages/Collections").then((m) => ({ default: m.CollectionsIndex })));
 const CollectionDetail = lazy(() => import("./pages/Collections").then((m) => ({ default: m.CollectionDetail })));
 const Submit = lazy(() => import("./pages/Submit"));
@@ -60,6 +61,7 @@ const App = () => (
                     <Route path="/tools/:slug" element={<ToolDetail />} />
                     <Route path="/categories" element={<Categories />} />
                     <Route path="/compare" element={<Compare />} />
+                    <Route path="/finder" element={<Finder />} />
                     <Route path="/stacks" element={<CollectionsIndex />} />
                     <Route path="/stacks/:slug" element={<CollectionDetail />} />
                     <Route path="/submit" element={<Submit />} />

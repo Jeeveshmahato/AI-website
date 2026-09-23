@@ -10,6 +10,7 @@ const COLUMNS = [
     title: "Directory",
     links: [
       { label: "All tools", to: "/aitools" },
+      { label: "Tool Finder", to: "/finder" },
       { label: "Trending", to: "/aitools?sort=trending" },
       { label: "Newest", to: "/aitools?sort=newest" },
       { label: "Free tools", to: "/aitools?price=Free" },

@@ -61,7 +61,17 @@ export function useSaved() {
     saved.set([toolKey(tool), ...current]);
     return true;
   }, []);
-  return { savedCount: items.length, isSaved, toggleSaved };
+  // Adds tools that aren't saved yet; returns how many were added.
+  const saveMany = useCallback((tools) => {
+    const current = saved.get();
+    const toAdd = tools.filter((t) => !matches(current, t)).map(toolKey);
+    if (toAdd.length) saved.set([...toAdd, ...current]);
+    return toAdd.length;
+  }, []);
+  const removeKeys = useCallback((keys) => saved.set(saved.get().filter((k) => !keys.includes(k))), []);
+  // Note: raw keys may include tools that aren't in the directory (anymore); use
+  // resolveKeys(savedKeys, tools) for anything shown to the user.
+  return { savedKeys: items, isSaved, toggleSaved, saveMany, removeKeys };
 }
 
 export function useCompare() {

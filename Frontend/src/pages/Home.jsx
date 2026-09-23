@@ -80,7 +80,14 @@ const Hero = ({ tools }) => {
             </button>
           </form>
 
-          <p className="mt-4 flex flex-wrap items-center gap-x-1 gap-y-1 text-sm text-fg-subtle">
+          <Link
+            to="/finder"
+            className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-fg underline decoration-line-strong underline-offset-4 hover:decoration-fg"
+          >
+            Not sure what you need? Answer 3 quick questions <FiArrowRight aria-hidden="true" />
+          </Link>
+
+          <p className="mt-3 flex flex-wrap items-center gap-x-1 gap-y-1 text-sm text-fg-subtle">
             <span className="mr-1">Popular:</span>
             {QUICK_LINKS.map((name, i) => {
               const cat = CATEGORIES.find((c) => c.name === name);

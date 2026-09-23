@@ -4,11 +4,13 @@ import { FiChevronRight, FiShare2, FiStar, FiArrowRight, FiColumns, FiFlag, FiAr
 import Seo from "../Components/Seo";
 import ToolLogo from "../Components/ToolLogo";
 import PriceTag from "../Components/PriceTag";
+import MakerBadge from "../Components/MakerBadge";
 import { ToolRow, SaveButton, CompareButton, UpvoteButton, VisitLink } from "../Components/ToolCard";
 import { useToast } from "../Components/Toast";
 import NotFound from "./NotFound";
 import { useTools } from "../lib/toolsStore";
 import { api } from "../lib/api";
+import { enrichTool } from "../lib/enrich";
 import { PRICING_NOTES } from "../lib/constants";
 import { recordView, MAX_COMPARE } from "../lib/personal";
 import { formatCount, formatDate, getDomain, safeUrl, toolKey } from "../lib/utils";
@@ -49,7 +51,7 @@ const ToolDetail = () => {
     let cancelled = false;
     api
       .getTool(slug, { retries: 0 })
-      .then((t) => !cancelled && setRemote({ slug, tool: t, done: true }))
+      .then((t) => !cancelled && setRemote({ slug, tool: enrichTool(t), done: true }))
       .catch(() => !cancelled && setRemote({ slug, tool: null, done: true }));
     return () => {
       cancelled = true;
@@ -265,6 +267,8 @@ const ToolDetail = () => {
               </DetailRow>
               {tool.createdAt && <DetailRow label="Listed">{formatDate(tool.createdAt)}</DetailRow>}
             </dl>
+
+            <MakerBadge tool={tool} />
 
             <Link
               to={`/contact?subject=${encodeURIComponent(`Issue with ${tool.name}`)}`}

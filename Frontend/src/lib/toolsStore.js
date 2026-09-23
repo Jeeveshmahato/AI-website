@@ -2,6 +2,7 @@ import { useEffect, useSyncExternalStore } from "react";
 import { api, API_BASE } from "./api";
 import { readJSON, writeJSON } from "./storage";
 import fallbackTools from "../data/fallbackTools";
+import { enrichTools } from "./enrich";
 
 const CACHE_KEY = "aitools_cache_v2";
 const RETRY_DELAYS = [5_000, 10_000, 20_000, 30_000, 60_000]; // then every 60s
@@ -23,7 +24,7 @@ const cached = readJSON(CACHE_KEY, null);
 const hasCache = cached && Array.isArray(cached.data) && cached.data.length > 0;
 
 let state = {
-  tools: hasCache ? cached.data : fallbackTools,
+  tools: hasCache ? enrichTools(cached.data) : fallbackTools,
   source: hasCache ? "cache" : "fallback",
   syncing: false,
   error: null,
@@ -58,7 +59,7 @@ export function syncTools({ manual = false } = {}) {
     .then((data) => {
       if (!Array.isArray(data)) throw new Error("Invalid response from server");
       writeJSON(CACHE_KEY, { data, timestamp: Date.now() });
-      setState({ tools: data, source: "live", syncing: false, error: null, attempts: 0 });
+      setState({ tools: enrichTools(data), source: "live", syncing: false, error: null, attempts: 0 });
     })
     .catch((err) => {
       if (!warned) {

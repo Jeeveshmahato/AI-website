@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiSearch, FiArrowRight, FiClock, FiLayers, FiCornerDownLeft, FiColumns, FiPlus, FiBookmark, FiGrid } from "react-icons/fi";
+import { FiSearch, FiArrowRight, FiClock, FiLayers, FiCornerDownLeft, FiColumns, FiPlus, FiBookmark, FiGrid, FiCompass } from "react-icons/fi";
 import ToolLogo from "./ToolLogo";
 import { useTools } from "../lib/toolsStore";
 import { useRecent, resolveKeys } from "../lib/personal";
@@ -14,6 +14,7 @@ export const useCommandPalette = () => useContext(PaletteContext);
 
 const PAGES = [
   { label: "Explore all tools", to: "/aitools", icon: FiGrid },
+  { label: "Tool Finder: 3 questions", to: "/finder", icon: FiCompass },
   { label: "Compare tools", to: "/compare", icon: FiColumns },
   { label: "Saved tools", to: "/saved", icon: FiBookmark },
   { label: "Submit a tool", to: "/submit", icon: FiPlus },

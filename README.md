@@ -22,6 +22,10 @@ Defined once in `Frontend/src/index.css` as semantic tokens (`canvas`, `surface`
 | Discovery | Relevance-ranked search (`/` or `Ctrl+K`), 11 categories, pricing filter (Free / Freemium / Paid), sort by featured, upvotes, trending, newest, A–Z. Filters live in the URL, so every search is shareable. |
 | Tool pages | `/tools/:slug` with description, tags, pricing notes, share button, alternatives, and SoftwareApplication structured data for SEO. |
 | Engagement | Upvotes, saved tools (`/saved`, stored in the browser), visit tracking that powers "Trending", "Tool of the day", "Continue exploring" (recently viewed). |
+| Tool Finder | `/finder`: three questions (task, budget, priority) produce a ranked top 3 with plain-language reasons. Results live in the URL, so they can be shared. |
+| Shareable shortlists | "Share list" on `/saved` copies a link (`/saved?tools=a,b,c`); recipients can "Save all" in one click. |
+| Maker badge | Tool pages offer a "Listed on AI Tools Hub" badge (light/dark SVG) with copy-paste embed code that links back to the listing. |
+| Admin editing | `/admin` → Edit fixes any listing's pricing, tags, tagline, links or description. |
 | Compare | Pick up to 3 tools from any card; a floating tray follows you, and `/compare?tools=a,b,c` gives a shareable side-by-side table. |
 | Curated stacks | `/stacks`: hand-picked toolkits (creator, developer, student, marketing, founder, free). Edit them in `Frontend/src/data/collections.js`. |
 | Command palette | `Ctrl/⌘ + K` on any page: instant search across tools, categories and stacks, with keyboard navigation. |
@@ -37,7 +41,8 @@ Defined once in `Frontend/src/index.css` as semantic tokens (`canvas`, `surface`
 cd Backend
 cp .env.example .env        # fill in MONGO_URI and API_KEY
 npm install
-npm run seed                # optional: loads 33 curated tools (idempotent)
+npm run seed                # loads 33 curated tools + fills blank tags/taglines (idempotent, safe)
+npm run seed -- --overwrite # also resets pricing/descriptions of catalog tools to data/seedTools.js
 npm run dev                 # http://localhost:5000
 npm test
 

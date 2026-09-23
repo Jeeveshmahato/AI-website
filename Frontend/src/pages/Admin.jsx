@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { FiCheck, FiX, FiStar, FiTrash2, FiLogOut, FiExternalLink, FiMail, FiRefreshCw } from "react-icons/fi";
+import { FiCheck, FiX, FiStar, FiTrash2, FiLogOut, FiExternalLink, FiMail, FiRefreshCw, FiEdit2 } from "react-icons/fi";
 import Seo from "../Components/Seo";
 import ToolLogo from "../Components/ToolLogo";
 import { useToast } from "../Components/Toast";
 import { api } from "../lib/api";
 import { loadTools } from "../lib/toolsStore";
+import { CATEGORY_NAMES, PRICING } from "../lib/constants";
 import { cn, formatDate, getDomain, safeUrl } from "../lib/utils";
 
 const KEY_STORAGE = "admin_api_key";
@@ -25,6 +26,107 @@ const TABS = [
   { key: "rejected", label: "Rejected" },
   { key: "messages", label: "Messages" },
 ];
+
+const EDIT_FIELDS = ["name", "tagline", "category", "price", "link", "image", "tags", "description"];
+
+// Inline editor for a listing. Sends only changed fields; server validation errors are
+// shown next to the field they belong to.
+const EditToolForm = ({ tool, client, onDone }) => {
+  const toast = useToast();
+  const [values, setValues] = useState(() => ({
+    name: tool.name || "",
+    tagline: tool.tagline || "",
+    category: tool.category || CATEGORY_NAMES[0],
+    price: tool.price || "Freemium",
+    link: tool.link || "",
+    image: tool.image || "",
+    tags: (tool.tags || []).join(", "),
+    description: tool.description || "",
+  }));
+  const [errors, setErrors] = useState({});
+  const [saving, setSaving] = useState(false);
+
+  const set = (key) => (e) => setValues((v) => ({ ...v, [key]: e.target.value }));
+
+  const submit = async (e) => {
+    e.preventDefault();
+    const patch = {};
+    for (const key of EDIT_FIELDS) {
+      const original = key === "tags" ? (tool.tags || []).join(", ") : tool[key] || "";
+      if (values[key] !== original) {
+        patch[key] = key === "tags" ? values.tags.split(",").map((s) => s.trim()).filter(Boolean) : values[key].trim();
+      }
+    }
+    if (Object.keys(patch).length === 0) return onDone(false);
+    setSaving(true);
+    setErrors({});
+    try {
+      await client.updateTool(tool._id, patch);
+      toast(`${values.name} updated`);
+      onDone(true);
+    } catch (err) {
+      setErrors(err.fieldErrors || {});
+      toast(err.message, "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const field = (key, label, input) => (
+    <div>
+      <label htmlFor={`edit-${tool._id}-${key}`} className="label text-xs">
+        {label}
+      </label>
+      {input}
+      {errors[key] && <p className="mt-1 text-xs text-danger">{errors[key]}</p>}
+    </div>
+  );
+  const inputProps = (key) => ({
+    id: `edit-${tool._id}-${key}`,
+    value: values[key],
+    onChange: set(key),
+    className: cn("input py-2 text-sm", errors[key] && "input-error"),
+  });
+
+  return (
+    <form onSubmit={submit} className="mt-4 grid gap-4 border-t border-line pt-4 sm:grid-cols-2">
+      {field("name", "Name", <input {...inputProps("name")} maxLength={100} />)}
+      {field("tagline", "Tagline", <input {...inputProps("tagline")} maxLength={140} />)}
+      {field(
+        "category",
+        "Category",
+        <select {...inputProps("category")}>
+          {CATEGORY_NAMES.map((c) => (
+            <option key={c}>{c}</option>
+          ))}
+        </select>
+      )}
+      {field(
+        "price",
+        "Pricing",
+        <select {...inputProps("price")}>
+          {PRICING.map((p) => (
+            <option key={p}>{p}</option>
+          ))}
+        </select>
+      )}
+      {field("link", "Website", <input {...inputProps("link")} type="url" />)}
+      {field("image", "Logo URL (blank = site icon)", <input {...inputProps("image")} type="url" />)}
+      <div className="sm:col-span-2">{field("tags", "Good for (comma-separated, up to 8)", <input {...inputProps("tags")} />)}</div>
+      <div className="sm:col-span-2">
+        {field("description", "Description", <textarea {...inputProps("description")} rows={4} maxLength={2000} className={cn("input resize-y text-sm", errors.description && "input-error")} />)}
+      </div>
+      <div className="flex gap-2 sm:col-span-2">
+        <button type="submit" className="btn-primary min-h-9" disabled={saving}>
+          {saving ? "Saving…" : "Save changes"}
+        </button>
+        <button type="button" className="btn-ghost min-h-9" onClick={() => onDone(false)}>
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+};
 
 const Login = ({ onLogin }) => {
   const [value, setValue] = useState("");
@@ -72,6 +174,7 @@ const Login = ({ onLogin }) => {
 const Admin = () => {
   const [key, setKey] = useState(readKey);
   const [tab, setTab] = useState("pending");
+  const [editingId, setEditingId] = useState(null);
   const [summary, setSummary] = useState(null);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -219,12 +322,13 @@ const Admin = () => {
               </article>
             ))
           : items.map((t) => (
-              <article key={t._id} className="card flex flex-col gap-4 p-5 md:flex-row md:items-start">
+              <article key={t._id} className="card p-5">
+              <div className="flex flex-col gap-4 md:flex-row md:items-start">
                 <ToolLogo tool={t} />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="font-semibold text-fg">{t.name}</h2>
-                    {t.featured && <FiStar className="fill-amber-300 text-warning" aria-label="Featured" />}
+                    {t.featured && <FiStar className="fill-accent text-accent" aria-label="Featured" />}
                     <span className="text-sm text-fg-subtle">
                       {t.category} · {t.price} · {formatDate(t.createdAt)}
                     </span>
@@ -254,12 +358,34 @@ const Admin = () => {
                   )}
                   <button
                     type="button"
+                    className="btn-secondary min-h-9"
+                    aria-expanded={editingId === t._id}
+                    onClick={() => setEditingId(editingId === t._id ? null : t._id)}
+                  >
+                    <FiEdit2 aria-hidden="true" /> Edit
+                  </button>
+                  <button
+                    type="button"
                     className="btn-ghost min-h-9 text-danger hover:text-danger"
                     onClick={() => window.confirm(`Delete ${t.name} permanently?`) && act(() => client.deleteTool(t._id), `${t.name} deleted`)}
                   >
                     <FiTrash2 aria-hidden="true" /> Delete
                   </button>
                 </div>
+              </div>
+              {editingId === t._id && (
+                <EditToolForm
+                  tool={t}
+                  client={client}
+                  onDone={(changed) => {
+                    setEditingId(null);
+                    if (changed) {
+                      refresh();
+                      loadTools({ force: true });
+                    }
+                  }}
+                />
+              )}
               </article>
             ))}
       </div>
