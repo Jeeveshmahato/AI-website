@@ -21,6 +21,38 @@
       })();
     </script>
 
+    <!--
+      Recover from a stale index.html after a deploy. Build files have hashed names, and a
+      new deploy deletes the old ones; a cached index.html then requests files that no
+      longer exist, the SPA fallback answers with HTML, and the browser refuses it
+      ("MIME type text/html"). If a /assets/ file fails to load, reload once with a
+      cache-busting param so the CDN serves the current index.html. Must run before the
+      build's <script>/<link> tags, which Vite injects later in <head>.
+    -->
+    <script>
+      (function () {
+        var KEY = "asset_reload_at";
+        window.addEventListener(
+          "error",
+          function (e) {
+            var el = e.target;
+            if (!el || (el.tagName !== "SCRIPT" && el.tagName !== "LINK")) return;
+            if ((el.src || el.href || "").indexOf("/assets/") === -1) return;
+            try {
+              if (Date.now() - (Number(sessionStorage.getItem(KEY)) || 0) < 30000) return; // never loop
+              sessionStorage.setItem(KEY, String(Date.now()));
+            } catch (err) {
+              return;
+            }
+            var url = new URL(location.href);
+            url.searchParams.set("_v", Date.now().toString(36));
+            location.replace(url.toString());
+          },
+          true
+        );
+      })();
+    </script>
+
     <!-- Static tags for social previews (scrapers don't run JavaScript) -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="AI Tools Hub" />

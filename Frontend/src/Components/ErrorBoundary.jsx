@@ -1,4 +1,5 @@
 import { Component } from "react";
+import { isChunkLoadError, reloadFresh } from "../lib/staleDeploy";
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -12,17 +13,9 @@ class ErrorBoundary extends Component {
 
   componentDidCatch(error, errorInfo) {
     console.error("ErrorBoundary caught:", error, errorInfo);
-    // A failed lazy-loaded chunk usually means a new deploy replaced old assets; reload once.
-    if (/Failed to fetch dynamically imported module|Importing a module script failed/i.test(error?.message)) {
-      try {
-        if (!sessionStorage.getItem("chunk_reload")) {
-          sessionStorage.setItem("chunk_reload", "1");
-          window.location.reload();
-        }
-      } catch {
-        // ignore
-      }
-    }
+    // A failed lazy-loaded page chunk usually means a new deploy deleted the old files:
+    // reload once, bypassing the CDN's cached index.html.
+    if (isChunkLoadError(error)) reloadFresh();
   }
 
   render() {

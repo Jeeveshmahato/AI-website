@@ -42,6 +42,12 @@ services:
         source: /*
         destination: /index.html
     headers:
+      # HTML must always be revalidated: a cached index.html points at hashed build files
+      # that the next deploy deletes (the browser then gets HTML and reports a MIME error).
+      - path: /*
+        name: Cache-Control
+        value: no-cache
+      # Hashed build files never change, so they can be cached forever.
       - path: /assets/*
         name: Cache-Control
         value: public, max-age=31536000, immutable

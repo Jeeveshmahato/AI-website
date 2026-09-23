@@ -77,6 +77,9 @@ Deploy `Backend/` as its own project: `api/index.js` exports the Express app and
 **CORS error / "Failed to fetch" while the API returns 200.**
 The response is missing `Access-Control-Allow-Origin`, which means the request's `Origin` isn't allowed. `https://ai-website-frontend.onrender.com` is always allowed (see `Backend/config/env.js`); any other origin (custom domain, Vercel) must be in `CLIENT_URL`. Open `/health` and compare `corsOrigins` with the site's address bar, character for character (`https`, `www`, trailing slash). The backend log prints `[cors] Blocked origin "..."`, and the browser console explains the likely cause too.
 
+**"Refused to apply style… MIME type ('text/html')" / "Failed to load module script" right after a deploy.**
+The browser loaded a cached `index.html` from the previous deploy. It points at hashed build files that the new deploy deleted, and the SPA rewrite answers with HTML. The app recovers automatically (one cache-busting reload; see `Frontend/index.html` and `src/lib/staleDeploy.js`). To stop it happening, in Render → static site → **Headers**, add `/*` `Cache-Control: no-cache` and `/assets/*` `Cache-Control: public, max-age=31536000, immutable`. Verify with `curl -I https://<site>/` (expect `no-cache`) and `curl -I https://<site>/assets/<file>.js` (expect `immutable`).
+
 **Tools page says "Showing our offline catalog".** The frontend couldn't reach the API after several background retries. Check `VITE_BASEURL` (then redeploy the frontend), `/health`, and the CORS note above.
 
 **`/health` says `db: unreachable`.** Check the Atlas IP allowlist and `MONGO_URI`.
